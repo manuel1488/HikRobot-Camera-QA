@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(powershell.exe -NoProfile -Command \"Get-Content 'C:\\\\repos\\\\Hikrobot\\\\HikrobotDesktop\\\\HikrobotDesktop.csproj'\")",
+      "Bash(cmd.exe /c \"move C:\\\\repos\\\\Hikrobot C:\\\\repos\\\\TRVisionAI\")",
+      "Bash(powershell.exe -NoProfile -Command \"Test-Path 'C:\\\\repos\\\\TRVisionAI' ; Test-Path 'C:\\\\repos\\\\Hikrobot'\")",
+      "Bash(powershell.exe -NoProfile -Command \"\nrobocopy 'C:\\\\repos\\\\Hikrobot' 'C:\\\\repos\\\\TRVisionAI' /E /NFL /NDL /NJH /NJS /NC /NS 2>&1\nWrite-Host \\\\\"Exit: \\\\$LASTEXITCODE\\\\\"\n\")"
     ]
   }
 }

@@ -1,15 +1,17 @@
-# CLAUDE.md — Hikrobot Vision Sensor Integration
+﻿# CLAUDE.md — Hikrobot Vision Sensor Integration
 
 ## Contexto del proyecto
+
+**Fabricante / Cliente:** Two Rockets
 
 Integración con la cámara de visión artificial **Hikrobot MV-SC3050M-08M-WBN** para obtener resultados de inspección (OK/NG) e imágenes. El SDK oficial está instalado en la máquina de desarrollo.
 
 ## Rutas importantes
 
 ```
-C:\repos\Hikrobot\                          ← raíz del proyecto
-C:\repos\Hikrobot\docs\hikrobot\            ← manuales PDF del fabricante
-C:\repos\Hikrobot\docs\adr\                 ← decisiones de arquitectura
+C:\repos\TRVisionAI\                          ← raíz del proyecto
+C:\repos\TRVisionAI\docs\hikrobot\            ← manuales PDF del fabricante
+C:\repos\TRVisionAI\docs\adr\                 ← decisiones de arquitectura
 
 C:\Program Files (x86)\SCMVS\Development\  ← SDK oficial instalado
   SDK\C#\AnyCpu\MvVSControlSDK.Net.dll      ← referencia .NET principal

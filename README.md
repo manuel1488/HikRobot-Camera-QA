@@ -1,4 +1,6 @@
-# Hikrobot Vision Sensor Integration
+﻿# TRVisionAI — Hikrobot Vision Sensor Integration
+
+**Fabricante / Cliente:** Two Rockets
 
 Integración con la cámara de visión artificial **Hikrobot MV-SC3050M-08M-WBN** (serie SC3000) para obtener resultados de inspección (OK/NG) e imágenes vía SDK oficial.
 
@@ -32,7 +34,7 @@ La cámara expone una interfaz **GigE Vision** sobre Ethernet estándar. La comu
 ## Estructura del proyecto
 
 ```
-C:\repos\Hikrobot\
+C:\repos\TRVisionAI\
 ├── docs\
 │   ├── adr\                    # Registros de decisiones de arquitectura
 │   │   ├── ADR-001-sdk-oficial.md

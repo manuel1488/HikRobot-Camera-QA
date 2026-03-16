@@ -1,25 +1,25 @@
-{
+﻿{
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "HikrobotProbe (consola)",
+      "name": "TRVisionAI.Probe (consola)",
       "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "build HikrobotProbe",
-      "program": "${workspaceFolder}/HikrobotProbe/bin/Debug/net8.0-windows/HikrobotProbe.dll",
+      "preLaunchTask": "build TRVisionAI.Probe",
+      "program": "${workspaceFolder}/TRVisionAI.Probe/bin/Debug/net8.0-windows/TRVisionAI.Probe.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/HikrobotProbe",
+      "cwd": "${workspaceFolder}/TRVisionAI.Probe",
       "console": "integratedTerminal",
       "stopAtEntry": false
     },
     {
-      "name": "HikrobotDesktop (WPF)",
+      "name": "TRVisionAI.Desktop (WPF)",
       "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "build HikrobotDesktop",
-      "program": "${workspaceFolder}/HikrobotDesktop/bin/Debug/net8.0-windows/HikrobotDesktop.dll",
+      "preLaunchTask": "build TRVisionAI.Desktop",
+      "program": "${workspaceFolder}/TRVisionAI.Desktop/bin/Debug/net8.0-windows/TRVisionAI.Desktop.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/HikrobotDesktop",
+      "cwd": "${workspaceFolder}/TRVisionAI.Desktop",
       "console": "internalConsole",
       "stopAtEntry": false
     }

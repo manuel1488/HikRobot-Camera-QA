@@ -1,13 +1,13 @@
-{
+﻿{
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "build HikrobotProbe",
+      "label": "build TRVisionAI.Probe",
       "command": "dotnet",
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/HikrobotProbe/HikrobotProbe.csproj",
+        "${workspaceFolder}/TRVisionAI.Probe/TRVisionAI.Probe.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary",
         "--configuration", "Debug"
@@ -19,12 +19,12 @@
       }
     },
     {
-      "label": "build HikrobotDesktop",
+      "label": "build TRVisionAI.Desktop",
       "command": "dotnet",
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/HikrobotDesktop/HikrobotDesktop.csproj",
+        "${workspaceFolder}/TRVisionAI.Desktop/TRVisionAI.Desktop.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary",
         "--configuration", "Debug"
@@ -37,7 +37,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/Hikrobot.sln",
+        "${workspaceFolder}/TRVisionAI.sln",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary",
         "--configuration", "Debug"
