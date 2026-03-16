@@ -1,25 +1,16 @@
 using System.Collections.ObjectModel;
-using System.Windows.Media.Imaging;
 using System.IO;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Hikrobot.Camera;
 using Hikrobot.Models;
+using HikrobotDesktop.Settings;
 
 namespace HikrobotDesktop.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
-    // -------------------------------------------------------------------------
-    // Propiedades de conexión
-    // -------------------------------------------------------------------------
-
-    [ObservableProperty] private ObservableCollection<CameraInfo> _cameras = [];
-    [ObservableProperty] private CameraInfo?                      _selectedCamera;
-    [ObservableProperty] private string                           _user     = "Admin";
-    [ObservableProperty] private string                           _password = string.Empty;
-    [ObservableProperty] private bool                             _useEncryption = true;
-
     // -------------------------------------------------------------------------
     // Estado
     // -------------------------------------------------------------------------
@@ -29,13 +20,25 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public bool IsDisconnected => !IsConnected;
 
-    [ObservableProperty] private string _statusMessage = "Listo";
+    [ObservableProperty] private string _statusMessage  = "Conectando…";
+    [ObservableProperty] private string _cameraIp       = string.Empty;
+    [ObservableProperty] private string _cameraModel    = string.Empty;
+    [ObservableProperty] private string _sessionUser    = string.Empty;
+
+    public string AppVersion
+    {
+        get
+        {
+            var v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            return v is null ? "" : $"v{v.Major}.{v.Minor}.{v.Build}";
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Datos en vivo
     // -------------------------------------------------------------------------
 
-    [ObservableProperty] private BitmapSource? _liveImage;
+    [ObservableProperty] private BitmapSource?                   _liveImage;
     [ObservableProperty] private ObservableCollection<ResultRow> _results = [];
     [ObservableProperty] private int _okCount;
     [ObservableProperty] private int _ngCount;
@@ -45,70 +48,79 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     // Internos
     // -------------------------------------------------------------------------
 
-    private CameraClient?         _client;
+    private CameraClient?            _client;
     private CancellationTokenSource? _cts;
-    private int                   _rowNum;
+    private int                      _rowNum;
 
     // -------------------------------------------------------------------------
-    // Comandos
+    // Auto-conexión al abrir la ventana
     // -------------------------------------------------------------------------
 
-    [RelayCommand]
-    private void Scan()
+    public async Task AutoConnectAsync()
     {
-        StatusMessage = "Buscando cámaras…";
+        var s = SettingsService.Load();
+        string user          = s.Camera.User;
+        string plainPassword = SettingsService.Unprotect(s.Camera.PasswordDpapi);
+        bool   useEncryption = s.Camera.UseEncryption;
+        string savedIp       = s.Camera.IpAddress;
+
+        StatusMessage = "Buscando cámara…";
+
+        List<CameraInfo> cameras;
         try
         {
-            var found = CameraClient.EnumerateDevices();
-            Cameras = new ObservableCollection<CameraInfo>(found);
-            SelectedCamera = Cameras.FirstOrDefault();
-            StatusMessage = found.Count == 0
-                ? "No se encontraron cámaras."
-                : $"{found.Count} cámara(s) encontrada(s).";
+            cameras = await Task.Run(CameraClient.EnumerateDevices);
         }
         catch (HikrobotException ex)
         {
             StatusMessage = $"Error al buscar cámaras: {ex.Message}";
+            return;
         }
-    }
 
-    [RelayCommand(CanExecute = nameof(CanConnect))]
-    private async Task ConnectAsync()
-    {
-        if (SelectedCamera is null) return;
+        if (cameras.Count == 0)
+        {
+            StatusMessage = "No se encontraron cámaras. Verifica la conexión de red.";
+            return;
+        }
 
-        StatusMessage = $"Conectando a {SelectedCamera.IpAddress}…";
+        // Usar la cámara guardada en settings; si no coincide, tomar la primera
+        var camera = cameras.FirstOrDefault(c => c.IpAddress == savedIp) ?? cameras[0];
+        StatusMessage = $"Conectando a {camera.IpAddress}…";
+
         try
         {
             _client = new CameraClient();
-            string loginPassword = UseEncryption
-                ? PasswordHelper.ToMd5Hex(Password)
-                : Password;
+            string loginPassword = useEncryption
+                ? PasswordHelper.ToMd5Hex(plainPassword)
+                : plainPassword;
 
-            _client.Connect(SelectedCamera, User, loginPassword, encryptPassword: UseEncryption);
+            _client.Connect(camera, user, loginPassword, encryptPassword: useEncryption);
             _client.StartAcquisition();
 
-            IsConnected   = true;
-            StatusMessage = $"Conectado a {SelectedCamera.IpAddress}";
+            IsConnected  = true;
+            CameraIp     = camera.IpAddress;
+            CameraModel  = camera.ModelName;
+            SessionUser  = user;
+            StatusMessage = "Inspección en curso";
+            DisconnectCommand.NotifyCanExecuteChanged();
 
             _cts = new CancellationTokenSource();
             await Task.Run(() => AcquisitionLoop(_cts.Token));
         }
         catch (HikrobotException ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = $"Error al conectar: {ex.Message}";
             _client?.Dispose();
             _client = null;
         }
     }
 
-    private bool CanConnect() => SelectedCamera is not null && !IsConnected;
+    // -------------------------------------------------------------------------
+    // Comando Detener
+    // -------------------------------------------------------------------------
 
     [RelayCommand(CanExecute = nameof(IsConnected))]
-    private void Disconnect()
-    {
-        _cts?.Cancel();
-    }
+    private void Disconnect() => _cts?.Cancel();
 
     // -------------------------------------------------------------------------
     // Loop de adquisición (hilo de fondo)
@@ -134,7 +146,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 if (errors >= 5)
                 {
                     App.Current.Dispatcher.Invoke(() =>
-                        StatusMessage = "Demasiados errores. Desconectando.");
+                        StatusMessage = "Demasiados errores consecutivos. Deteniéndose.");
                     break;
                 }
                 continue;
@@ -151,16 +163,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private void ProcessFrame(InspectionFrame frame)
     {
-        // Imagen en vivo
         if (frame.ImageBytes is { Length: > 0 })
             LiveImage = ToBitmapSource(frame.ImageBytes);
 
-        // Contadores
         if      (frame.Verdict == InspectionVerdict.Ok) OkCount++;
         else if (frame.Verdict == InspectionVerdict.Ng) NgCount++;
         OnPropertyChanged(nameof(TotalCount));
 
-        // Fila en el grid
         _rowNum++;
         Results.Insert(0, new ResultRow
         {
@@ -172,7 +181,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NgCount      = frame.NgCount,
         });
 
-        // Limitar historial a 500 filas
         while (Results.Count > 500)
             Results.RemoveAt(Results.Count - 1);
 
@@ -182,11 +190,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private void OnDisconnected()
     {
         _client?.Dispose();
-        _client    = null;
-        _cts       = null;
-        IsConnected = false;
-        StatusMessage = "Desconectado.";
-        ConnectCommand.NotifyCanExecuteChanged();
+        _client       = null;
+        _cts          = null;
+        IsConnected   = false;
+        StatusMessage = "Detenido.";
         DisconnectCommand.NotifyCanExecuteChanged();
     }
 
@@ -199,10 +206,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         using var ms = new MemoryStream(jpegBytes);
         var bmp = new BitmapImage();
         bmp.BeginInit();
-        bmp.StreamSource  = ms;
-        bmp.CacheOption   = BitmapCacheOption.OnLoad;
+        bmp.StreamSource = ms;
+        bmp.CacheOption  = BitmapCacheOption.OnLoad;
         bmp.EndInit();
-        bmp.Freeze(); // permite uso cross-thread
+        bmp.Freeze();
         return bmp;
     }
 

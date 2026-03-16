@@ -1,6 +1,6 @@
 using System.Windows;
-using System.Windows.Controls;
 using HikrobotDesktop.ViewModels;
+using HikrobotDesktop.Views;
 
 namespace HikrobotDesktop;
 
@@ -13,9 +13,12 @@ public partial class MainWindow : Window
         InitializeComponent();
         _vm = new MainViewModel();
         DataContext = _vm;
+    }
 
-        // Escanear cámaras al arrancar
-        _vm.ScanCommand.Execute(null);
+    protected override async void OnContentRendered(EventArgs e)
+    {
+        base.OnContentRendered(e);
+        await _vm.AutoConnectAsync();
     }
 
     protected override void OnClosed(EventArgs e)
@@ -24,10 +27,11 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 
-    // PasswordBox no soporta data binding nativo — se actualiza manualmente
-    private void PwdBox_PasswordChanged(object sender, RoutedEventArgs e)
+    private void BtnHome_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is PasswordBox pb)
-            _vm.Password = pb.Password;
+        _vm.Dispose();
+        var home = new HomeWindow();
+        home.Show();
+        Close();
     }
 }
