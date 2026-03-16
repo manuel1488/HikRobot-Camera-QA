@@ -17,6 +17,32 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "label": "build HikrobotDesktop",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/HikrobotDesktop/HikrobotDesktop.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary",
+        "--configuration", "Debug"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build solution",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/Hikrobot.sln",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary",
+        "--configuration", "Debug"
+      ],
+      "problemMatcher": "$msCompile"
     }
   ]
 }

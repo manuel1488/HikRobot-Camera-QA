@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "HikrobotProbe (Debug)",
+      "name": "HikrobotProbe (consola)",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build HikrobotProbe",
@@ -10,10 +10,18 @@
       "args": [],
       "cwd": "${workspaceFolder}/HikrobotProbe",
       "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "env": {
-        "DOTNET_ENVIRONMENT": "Development"
-      }
+      "stopAtEntry": false
+    },
+    {
+      "name": "HikrobotDesktop (WPF)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build HikrobotDesktop",
+      "program": "${workspaceFolder}/HikrobotDesktop/bin/Debug/net8.0-windows/HikrobotDesktop.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/HikrobotDesktop",
+      "console": "internalConsole",
+      "stopAtEntry": false
     }
   ]
 }

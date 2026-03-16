@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
-using HikrobotProbe.Models;
+using Hikrobot.Models;
 using MvVSControlSDKNet;
 
-namespace HikrobotProbe.Camera;
+namespace Hikrobot.Camera;
 
 /// <summary>
 /// Wrapper sobre el SDK Hikrobot (MvVSControlSDKNet).
@@ -61,8 +61,6 @@ public sealed class CameraClient : IDisposable
         if (ret != CErrorCode.MV_VS_OK)
             throw new HikrobotException("CreateHandle failed", ret);
 
-        // LoginEX con bEncryption=false es equivalente a Login() pero más explícito.
-        // bEncryption=true: la contraseña ya viene hasheada (MD5) por el cliente.
         ret = _device.LoginEX(user, password, encryptPassword);
         if (ret != CErrorCode.MV_VS_OK)
         {
@@ -89,14 +87,9 @@ public sealed class CameraClient : IDisposable
 
         var param = new CParam(_device);
 
-        // false = modo trigger/continuo (no modo imagen por comando)
         ThrowIfError(param.SetBoolValue("CommandImageMode", false), "Set CommandImageMode");
-
-        // 2 = Continuous; 0 = Single frame
-        ThrowIfError(param.SetEnumValue("AcquisitionMode", 2), "Set AcquisitionMode");
-
-        // ModuleID = 0: imagen completa con nImageWidth/nImageHeight válidos
-        ThrowIfError(param.SetIntValue("ModuleID", 0), "Set ModuleID");
+        ThrowIfError(param.SetEnumValue("AcquisitionMode", 2),      "Set AcquisitionMode");
+        ThrowIfError(param.SetIntValue("ModuleID", 0),               "Set ModuleID");
 
         _stream = new CStream(_device);
         ThrowIfError(_stream.StartRun(), "StartRun");
@@ -120,7 +113,7 @@ public sealed class CameraClient : IDisposable
         if (ret == CErrorCode.MV_VS_E_NODATA)
         {
             _stream.ReleaseResultData(ref frameData);
-            return null; // timeout normal
+            return null;
         }
 
         if (ret != CErrorCode.MV_VS_OK)
@@ -155,7 +148,6 @@ public sealed class CameraClient : IDisposable
 
     private static InspectionFrame BuildFrame(ref MV_VS_DATA frameData)
     {
-        // Imagen principal
         byte[]? imageBytes = null;
         if (frameData.pImageData != IntPtr.Zero && frameData.nImageLen > 0)
         {
@@ -163,14 +155,12 @@ public sealed class CameraClient : IDisposable
             Marshal.Copy(frameData.pImageData, imageBytes, 0, (int)frameData.nImageLen);
         }
 
-        // Chunk Data → resultado JSON
-        string rawJson        = string.Empty;
-        var    verdict        = InspectionVerdict.Unknown;
-        string solutionName   = string.Empty;
-        long   totalCount     = 0;
-        long   ngCount        = 0;
+        string rawJson      = string.Empty;
+        var    verdict      = InspectionVerdict.Unknown;
+        string solutionName = string.Empty;
+        long   totalCount   = 0;
+        long   ngCount      = 0;
 
-        FrameDebugInfo debug;
         byte[]? chunkData = null;
 
         if (frameData.pChunkData != IntPtr.Zero && frameData.nChunkDataLen > 0)
@@ -181,7 +171,7 @@ public sealed class CameraClient : IDisposable
                 ChunkParser.ParseResult(chunkData, frameData.nChunkDataLen);
         }
 
-        debug = BuildDebugInfo(ref frameData, chunkData);
+        var debug = BuildDebugInfo(ref frameData, chunkData);
 
         return new InspectionFrame
         {
@@ -209,8 +199,7 @@ public sealed class CameraClient : IDisposable
             int tail = Math.Min(64, chunkData.Length);
             hexHead = Convert.ToHexString(chunkData, 0, head);
             hexTail = Convert.ToHexString(chunkData, chunkData.Length - tail, tail);
-            // Intentar leer como texto (puede revelar JSON si la estructura es diferente)
-            asText = System.Text.Encoding.UTF8.GetString(chunkData).Replace("\0", "·");
+            asText  = System.Text.Encoding.UTF8.GetString(chunkData).Replace("\0", "·");
             if (asText.Length > 512) asText = asText[..512] + "…";
         }
 

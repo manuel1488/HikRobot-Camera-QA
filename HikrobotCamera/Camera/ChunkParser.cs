@@ -1,10 +1,8 @@
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
-using HikrobotProbe.Models;
-using MvVSControlSDKNet;
+using Hikrobot.Models;
 
-namespace HikrobotProbe.Camera;
+namespace Hikrobot.Camera;
 
 /// <summary>
 /// Parsea el Chunk Data de un frame MV_VS_DATA y extrae el resultado de inspección.
@@ -24,19 +22,17 @@ internal static class ChunkParser
     public static (string rawJson, InspectionVerdict verdict, string solutionName, long total, long ng)
         ParseResult(byte[] chunkData, uint chunkDataLen)
     {
-        uint   offset     = 0;
-        var    endian     = new byte[4];
-        string rawJson    = string.Empty;
+        uint   offset  = 0;
+        var    endian  = new byte[4];
+        string rawJson = string.Empty;
 
         while (chunkDataLen > offset)
         {
-            // Leer ChunkLen (big-endian) — últimos 4 bytes del chunk actual
             if (chunkDataLen - offset < 8) break;
 
             Array.Copy(chunkData, (int)(chunkDataLen - offset - 4), endian, 0, 4);
             uint chunkLen = ToUInt32BigEndian(endian);
 
-            // Leer ChunkID (big-endian) — 4 bytes antes del ChunkLen
             Array.Copy(chunkData, (int)(chunkDataLen - offset - 8), endian, 0, 4);
             uint chunkId = ToUInt32BigEndian(endian);
 
@@ -47,7 +43,7 @@ internal static class ChunkParser
             {
                 int start = (int)(chunkDataLen - offset - 8 - chunkLen);
                 rawJson = Encoding.UTF8.GetString(chunkData, start, (int)chunkLen);
-                break; // el resultado siempre es el último chunk; no hay más que buscar
+                break;
             }
 
             offset += 8 + chunkLen;
@@ -71,14 +67,12 @@ internal static class ChunkParser
                 ? sn.GetString() ?? string.Empty
                 : string.Empty;
 
-            // Los contadores son números enteros en el JSON real (no strings)
             var totalCount = root.TryGetProperty("ScDeviceSolutionTotalNumber", out var total)
                 ? GetLong(total) : 0L;
 
             var ngCount = root.TryGetProperty("ScDeviceSolutionNgNumber", out var ng)
                 ? GetLong(ng) : 0L;
 
-            // ScDeviceSolutionRunningResult es número: 0 = OK, 1 = NG
             var verdict = InspectionVerdict.Unknown;
             if (root.TryGetProperty("ScDeviceSolutionRunningResult", out var result))
             {

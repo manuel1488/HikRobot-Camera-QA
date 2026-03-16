@@ -1,18 +1,18 @@
 using MvVSControlSDKNet;
 using System.Text;
 
-namespace HikrobotProbe.Camera;
+namespace Hikrobot.Camera;
 
 /// <summary>
 /// Información de una cámara descubierta en la red.
 /// </summary>
 public sealed class CameraInfo
 {
-    public uint   Index     { get; private init; }
-    public string IpAddress { get; private init; } = string.Empty;
-    public string ModelName { get; private init; } = string.Empty;
+    public uint   Index        { get; private init; }
+    public string IpAddress    { get; private init; } = string.Empty;
+    public string ModelName    { get; private init; } = string.Empty;
     public string SerialNumber { get; private init; } = string.Empty;
-    public string UserName  { get; private init; } = string.Empty;
+    public string UserName     { get; private init; } = string.Empty;
 
     // Referencia interna al struct del SDK para CreateHandle
     internal MV_VS_DEVICE_INFO SdkInfo { get; private init; }

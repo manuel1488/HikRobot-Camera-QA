@@ -1,5 +1,5 @@
-using HikrobotProbe.Camera;
-using HikrobotProbe.Models;
+using Hikrobot.Camera;
+using Hikrobot.Models;
 
 // ---------------------------------------------------------------------------
 // Hikrobot Probe — herramienta de validación de comunicación con MV-SC3050M
@@ -103,7 +103,7 @@ string passMode = (Console.ReadLine() ?? "").Trim().ToUpperInvariant();
 
 bool useEncryption = passMode == "M";
 string loginPassword = useEncryption
-    ? HikrobotProbe.Camera.PasswordHelper.ToMd5Hex(password)
+    ? PasswordHelper.ToMd5Hex(password)
     : password;
 
 // ---------------------------------------------------------------------------

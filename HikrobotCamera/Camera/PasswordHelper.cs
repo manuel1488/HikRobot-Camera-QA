@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace HikrobotProbe.Camera;
+namespace Hikrobot.Camera;
 
 /// <summary>
 /// Utilidades para el cifrado de contraseña que acepta LoginEX(bEncryption=true).

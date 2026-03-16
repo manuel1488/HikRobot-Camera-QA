@@ -1,4 +1,4 @@
-namespace HikrobotProbe.Models;
+namespace Hikrobot.Models;
 
 public sealed class InspectionFrame
 {
@@ -35,7 +35,7 @@ public sealed class FrameDebugInfo
     public uint   ChunkDataLen  { get; init; }
     public bool   HasImagePtr   { get; init; }
     public bool   HasChunkPtr   { get; init; }
-    /// <summary>Primeros 64 bytes del ChunkData en hex, para inspecionar la estructura.</summary>
+    /// <summary>Primeros 64 bytes del ChunkData en hex.</summary>
     public string ChunkHexDump  { get; init; } = string.Empty;
     /// <summary>Últimos 64 bytes del ChunkData en hex (donde está el trailer de cada chunk).</summary>
     public string ChunkHexTail  { get; init; } = string.Empty;

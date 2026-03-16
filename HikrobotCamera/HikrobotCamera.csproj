@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Hikrobot</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      Ruta de instalación de SCMVS.
+      Sobreescribir desde línea de comandos si es necesario:
+        dotnet build /p:ScmvsRoot="D:\OtraRuta\SCMVS\Development"
+    -->
+    <ScmvsRoot>C:\Program Files (x86)\SCMVS\Development</ScmvsRoot>
+  </PropertyGroup>
+
+  <!-- SDK managed wrapper -->
+  <ItemGroup>
+    <Reference Include="MvVSControlSDK.Net">
+      <HintPath>$(ScmvsRoot)\SDK\C#\win64\MvVSControlSDK.Net.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- DLLs nativas C++ — se copian al output de los proyectos consumidores -->
+  <ItemGroup>
+    <None Include="$(ScmvsRoot)\SDK\C\dll\win64\*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+</Project>

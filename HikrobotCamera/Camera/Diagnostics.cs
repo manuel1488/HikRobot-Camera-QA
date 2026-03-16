@@ -2,7 +2,7 @@ using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using MvVSControlSDKNet;
 
-namespace HikrobotProbe.Camera;
+namespace Hikrobot.Camera;
 
 /// <summary>
 /// Diagnósticos de conectividad y autenticación para la cámara Hikrobot.

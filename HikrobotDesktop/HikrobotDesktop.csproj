@@ -1,14 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>HikrobotProbe</AssemblyName>
-    <RootNamespace>HikrobotProbe</RootNamespace>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>HikrobotDesktop</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\HikrobotCamera\HikrobotCamera.csproj" />
