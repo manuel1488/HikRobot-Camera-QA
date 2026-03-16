@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "HikrobotProbe (Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build HikrobotProbe",
+      "program": "${workspaceFolder}/HikrobotProbe/bin/Debug/net8.0-windows/HikrobotProbe.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/HikrobotProbe",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  ]
+}

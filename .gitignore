@@ -1,0 +1,18 @@
+# Build outputs
+bin/
+obj/
+
+# Output de la aplicación (imágenes capturadas y logs de sesión)
+**/output/
+
+# Visual Studio / VS Code
+.vs/
+*.user
+*.suo
+
+# Rider
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
