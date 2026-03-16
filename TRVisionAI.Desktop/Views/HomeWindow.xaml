@@ -1,7 +1,7 @@
 ﻿<Window x:Class="TRVisionAI.Desktop.Views.HomeWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Hikrobot — Two Rockets" Height="520" Width="680"
+        Title="TR Vision AI" Height="520" Width="680"
         ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         Background="#1A1A1A">
 
