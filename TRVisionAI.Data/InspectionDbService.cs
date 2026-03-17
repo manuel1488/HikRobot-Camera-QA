@@ -177,6 +177,41 @@ public sealed class InspectionDbService
             .ExecuteUpdateAsync(s => s.SetProperty(f => f.ApiSentAt, sentAt));
     }
 
+    /// <summary>
+    /// Carga el detalle completo de un frame: entidad con módulos + bytes de imagen del disco.
+    /// Retorna null si el frame aún no fue persistido (race condition posible en frames muy recientes).
+    /// </summary>
+    public async Task<FrameDetail?> GetFrameDetailAsync(int sessionId, DateTime receivedAt)
+    {
+        await using var db = await _factory.CreateDbContextAsync();
+
+        // Usar ReceivedAt como clave de lookup porque nImageNum del SDK puede repetirse entre capturas.
+        var utc    = receivedAt.ToUniversalTime();
+        var entity = await db.Frames
+            .AsNoTracking()
+            .Include(f => f.Modules)
+            .FirstOrDefaultAsync(f => f.SessionId == sessionId && f.ReceivedAt == utc);
+
+        if (entity is null) return null;
+
+        byte[]? imageBytes = null;
+        byte[]? maskBytes  = null;
+
+        if (entity.ImagePath is not null)
+        {
+            var abs = DbPathHelper.ToAbsolutePath(entity.ImagePath);
+            if (File.Exists(abs)) imageBytes = await File.ReadAllBytesAsync(abs);
+        }
+
+        if (entity.MaskImagePath is not null)
+        {
+            var abs = DbPathHelper.ToAbsolutePath(entity.MaskImagePath);
+            if (File.Exists(abs)) maskBytes = await File.ReadAllBytesAsync(abs);
+        }
+
+        return new FrameDetail(entity, imageBytes, maskBytes);
+    }
+
     public async Task<List<SessionEntity>> GetSessionsAsync(int skip = 0, int take = 50)
     {
         await using var db = await _factory.CreateDbContextAsync();
@@ -195,7 +230,8 @@ public sealed class InspectionDbService
     {
         if (bytes is not { Length: > 0 }) return null;
 
-        string fileName    = $"{frameNum:D10}_{suffix}.jpg";
+        // Usar timestamp como nombre para garantizar unicidad aunque nImageNum del SDK se repita.
+        string fileName     = $"{date:HHmmss_fff}_{suffix}.jpg";
         string relativePath = DbPathHelper.BuildRelativePath(date, fileName);
         string absPath      = DbPathHelper.EnsureDirectory(relativePath);
 

@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using TRVisionAI.Desktop.ViewModels;
 using TRVisionAI.Desktop.Views;
 
@@ -33,5 +35,18 @@ public partial class MainWindow : Window
         var home = new HomeWindow();
         home.Show();
         Close();
+    }
+
+    private void ResultsGrid_DoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not DataGrid grid) return;
+        if (grid.SelectedItem is not ResultRow row) return;
+
+        var rows  = _vm.Results.ToList();
+        var index = rows.IndexOf(row);
+        if (index < 0) return;
+
+        var detail = new FrameDetailWindow(rows, index, App.DbService) { Owner = this };
+        detail.ShowDialog();
     }
 }

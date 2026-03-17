@@ -53,10 +53,13 @@ internal static class ChunkParser
             {
                 rawJson = Encoding.UTF8.GetString(chunkData, dataStart, (int)chunkLen);
             }
-            else if (chunkId == ChunkMaskImagePort && maskBytes is null)
+            else if (chunkId == ChunkMaskImagePort && maskBytes is null && chunkLen > 16)
             {
-                maskBytes = new byte[chunkLen];
-                Array.Copy(chunkData, dataStart, maskBytes, 0, (int)chunkLen);
+                // Los primeros 16 bytes son header: ModuleID(4) + Format(4) + Width(4) + Height(4)
+                // El resto son los bytes de imagen reales (JPEG cuando Format == 1)
+                int imageLen = (int)chunkLen - 16;
+                maskBytes = new byte[imageLen];
+                Array.Copy(chunkData, dataStart + 16, maskBytes, 0, imageLen);
             }
 
             offset += 8 + chunkLen;
@@ -92,16 +95,12 @@ internal static class ChunkParser
             var ngCount = root.TryGetProperty("ScDeviceSolutionNgNumber", out var ng)
                 ? GetLong(ng) : 0L;
 
-            var verdict = InspectionVerdict.Unknown;
-            if (root.TryGetProperty("ScDeviceSolutionRunningResult", out var result))
-            {
-                verdict = GetLong(result) switch
-                {
-                    0 => InspectionVerdict.Ok,
-                    1 => InspectionVerdict.Ng,
-                    _ => InspectionVerdict.Unknown,
-                };
-            }
+            // Fuente primaria: logic.solution_sts o logic.param_status_string_solution
+            // (string explícito "OK"/"NG" del módulo lógico que es el árbitro final).
+            // Fallback: ScDeviceSolutionRunningResult numérico (semántica ambigua en algunos firmware).
+            var verdict = TryReadLogicSolutionVerdict(root)
+                       ?? ReadNumericVerdict(root)
+                       ?? InspectionVerdict.Unknown;
 
             var modules = ParseModules(root);
             return (verdict, solutionName, totalCount, ngCount, modules);
@@ -114,12 +113,10 @@ internal static class ChunkParser
 
     private static IReadOnlyList<ModuleResult> ParseModules(JsonElement root)
     {
-        // The firmware may expose per-module data under different keys.
-        // Try the known candidates; skip gracefully if absent.
         JsonElement arr = default;
-        bool found = root.TryGetProperty("CurrentData",    out arr) ||
-                     root.TryGetProperty("ModuleResults",  out arr) ||
-                     root.TryGetProperty("moduleResults",  out arr);
+        bool found = root.TryGetProperty("CurrentData",   out arr) ||
+                     root.TryGetProperty("ModuleResults", out arr) ||
+                     root.TryGetProperty("moduleResults", out arr);
 
         if (!found || arr.ValueKind != JsonValueKind.Array)
             return [];
@@ -128,31 +125,134 @@ internal static class ChunkParser
         foreach (var item in arr.EnumerateArray())
         {
             string name = string.Empty;
-            if (item.TryGetProperty("ModuleName",   out var mn) ||
-                item.TryGetProperty("moduleName",   out mn))
+            if (item.TryGetProperty("ModuleName",    out var mn) ||
+                item.TryGetProperty("moduleName",    out mn)     ||
+                item.TryGetProperty("strModuleName", out mn))
                 name = mn.GetString() ?? string.Empty;
-
-            var moduleVerdict = InspectionVerdict.Unknown;
-            if (item.TryGetProperty("ModuleResult", out var mr) ||
-                item.TryGetProperty("moduleResult", out mr))
-            {
-                moduleVerdict = GetLong(mr) switch
-                {
-                    0 => InspectionVerdict.Ok,
-                    1 => InspectionVerdict.Ng,
-                    _ => InspectionVerdict.Unknown,
-                };
-            }
 
             list.Add(new ModuleResult
             {
                 ModuleName = name,
-                Verdict    = moduleVerdict,
+                Verdict    = ParseModuleVerdict(item),
                 RawJson    = item.GetRawText(),
             });
         }
 
         return list;
+    }
+
+    /// <summary>
+    /// Lee el veredicto de la solución desde el módulo "logic" en CurrentData.
+    /// Busca los campos solution_sts o param_status_string_solution que contienen "OK"/"NG" explícito.
+    /// Retorna null si no se encuentra el módulo o los campos.
+    /// </summary>
+    private static InspectionVerdict? TryReadLogicSolutionVerdict(JsonElement root)
+    {
+        if (!root.TryGetProperty("CurrentData", out var arr) || arr.ValueKind != JsonValueKind.Array)
+            return null;
+
+        foreach (var module in arr.EnumerateArray())
+        {
+            if (!module.TryGetProperty("ModuleName", out var mn) ||
+                mn.GetString() != "logic") continue;
+
+            if (!module.TryGetProperty("pInfo", out var pInfo) ||
+                pInfo.ValueKind != JsonValueKind.Array) continue;
+
+            foreach (var info in pInfo.EnumerateArray())
+            {
+                if (!info.TryGetProperty("strEnName", out var enNameEl)) continue;
+                var enName = enNameEl.GetString();
+
+                // solution_sts y param_status_string_solution son los campos más fiables
+                if (enName is "solution_sts" or "param_status_string_solution")
+                {
+                    if (info.TryGetProperty("pStringValue", out var sv) &&
+                        sv.ValueKind == JsonValueKind.Array)
+                    {
+                        var first = sv.EnumerateArray().FirstOrDefault();
+                        if (first.ValueKind == JsonValueKind.Object &&
+                            first.TryGetProperty("strValue", out var sval))
+                        {
+                            return sval.GetString() switch
+                            {
+                                "OK" => InspectionVerdict.Ok,
+                                "NG" => InspectionVerdict.Ng,
+                                _    => null,
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Fallback: lee ScDeviceSolutionRunningResult como numérico (0=Ok, 1=Ng).
+    /// Puede tener semántica ambigua según versión de firmware — usar solo si no hay string explícito.
+    /// </summary>
+    private static InspectionVerdict? ReadNumericVerdict(JsonElement root)
+    {
+        if (!root.TryGetProperty("ScDeviceSolutionRunningResult", out var result))
+            return null;
+
+        return GetLong(result) switch
+        {
+            0 => InspectionVerdict.Ok,
+            1 => InspectionVerdict.Ng,
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// Lee el veredicto de un módulo desde su array pInfo.
+    /// Fuente primaria: pInfo[strEnName=="param_status_string"].pStringValue[0].strValue ("OK"/"NG").
+    /// Fallback: pInfo[strEnName=="param_status"].pIntValue[0] donde 1=OK.
+    /// </summary>
+    private static InspectionVerdict ParseModuleVerdict(JsonElement item)
+    {
+        if (!item.TryGetProperty("pInfo", out var pInfo) || pInfo.ValueKind != JsonValueKind.Array)
+            return InspectionVerdict.Unknown;
+
+        string? statusString = null;
+        int?    statusInt    = null;
+
+        foreach (var info in pInfo.EnumerateArray())
+        {
+            if (!info.TryGetProperty("strEnName", out var enNameEl)) continue;
+            var enName = enNameEl.GetString();
+
+            if (enName == "param_status_string" && statusString is null)
+            {
+                if (info.TryGetProperty("pStringValue", out var sv) && sv.ValueKind == JsonValueKind.Array)
+                {
+                    var first = sv.EnumerateArray().FirstOrDefault();
+                    if (first.ValueKind == JsonValueKind.Object &&
+                        first.TryGetProperty("strValue", out var sval))
+                        statusString = sval.GetString();
+                }
+            }
+            else if (enName == "param_status" && statusInt is null)
+            {
+                if (info.TryGetProperty("pIntValue", out var iv) && iv.ValueKind == JsonValueKind.Array)
+                {
+                    var first = iv.EnumerateArray().FirstOrDefault();
+                    if (first.ValueKind == JsonValueKind.Number)
+                        statusInt = first.GetInt32();
+                }
+            }
+
+            if (statusString is not null && statusInt is not null) break;
+        }
+
+        // El string es la fuente autoritativa cuando está disponible
+        if (statusString is "NG") return InspectionVerdict.Ng;
+        if (statusString is "OK") return InspectionVerdict.Ok;
+
+        // Fallback por int: 1 = OK de forma consistente en módulos sin string
+        return statusInt == 1 ? InspectionVerdict.Ok : InspectionVerdict.Unknown;
     }
 
     /// <summary>

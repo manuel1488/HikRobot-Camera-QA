@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="TR Vision AI — Inspección Visual" Height="700" Width="1100"
+        MinWidth="900" MinHeight="600"
+        WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
         Icon="Assets/app.ico"
         Background="#1E1E1E">
@@ -126,7 +128,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Tabla de resultados -->
+                <!-- Tabla de resultados (doble-click para ver detalle) -->
                 <DataGrid Grid.Row="1"
                           ItemsSource="{Binding Results}"
                           AutoGenerateColumns="False"
@@ -136,7 +138,8 @@
                           BorderThickness="0"
                           GridLinesVisibility="Horizontal"
                           HorizontalGridLinesBrush="#2A2A2A"
-                          RowStyle="{StaticResource OkRowStyle}">
+                          RowStyle="{StaticResource OkRowStyle}"
+                          MouseDoubleClick="ResultsGrid_DoubleClick">
 
                     <DataGrid.ColumnHeaderStyle>
                         <Style TargetType="DataGridColumnHeader">

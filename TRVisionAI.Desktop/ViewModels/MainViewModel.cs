@@ -192,6 +192,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             SolutionName = frame.SolutionName,
             TotalCount   = frame.TotalCount,
             NgCount      = frame.NgCount,
+            FrameNumber  = (long)frame.FrameNumber,
+            SessionId    = _sessionId,
         });
 
         while (Results.Count > 500)
