@@ -162,9 +162,9 @@
                                                 <TextBlock Text="{Binding ModuleName}"
                                                            Foreground="#CCCCCC" FontSize="12"/>
                                             </DockPanel>
-                                            <!-- Línea de detalle solo para módulos NG con información extra -->
+                                            <!-- Línea de detalle para anomalyjudge (OK/NG) y otros módulos NG -->
                                             <TextBlock Text="{Binding DetailLine}"
-                                                       Foreground="#CC8888" FontSize="10"
+                                                       Foreground="{Binding DetailColor}" FontSize="10"
                                                        Margin="0,1,0,0" FontStyle="Italic">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">

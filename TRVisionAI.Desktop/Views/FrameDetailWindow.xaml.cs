@@ -22,14 +22,7 @@ public partial class FrameDetailWindow : Window
     private readonly IReadOnlyList<ResultRow> _rows;
     private readonly InspectionDbService      _db;
     private int                               _index;
-    private OverlayData?                      _overlayData;
-
-    private record OverlayData(
-        bool   IsOk,
-        float  Score,
-        string RangeText,   // e.g. "OKRange:50-100"
-        float? CenterX,
-        float? CenterY);
+    private LiveOverlayInfo? _overlayData;
 
     private ResultRow CurrentRow => _rows[_index];
 
@@ -257,10 +250,10 @@ public partial class FrameDetailWindow : Window
     /// Extrae datos del módulo anomalyjudge (o formato) para el overlay.
     /// Busca rst_similarity_float, rst_string_en, rst_center_x/y en pInfo.
     /// </summary>
-    private static OverlayData? ExtractOverlayData(FrameEntity entity)
+    private static LiveOverlayInfo? ExtractOverlayData(FrameEntity entity)
     {
-        var module = entity.Modules.FirstOrDefault(m =>
-            m.ModuleName is "anomalyjudge" or "format");
+        var module = entity.Modules.FirstOrDefault(m => m.ModuleName == "anomalyjudge")
+                  ?? entity.Modules.FirstOrDefault(m => m.ModuleName == "format");
         if (module is null) return null;
 
         try
@@ -293,17 +286,19 @@ public partial class FrameDetailWindow : Window
                         rstStringEn = GetFirstStringVal(info);
                         break;
                     case "rst_similarity_limit_l":
-                        limitL = GetFirstFloatVal(info);
+                        limitL = GetFirstFloatVal(info) ?? GetFirstIntVal(info);
                         break;
                     case "rst_similarity_limit_h":
-                        limitH = GetFirstFloatVal(info);
+                        limitH = GetFirstFloatVal(info) ?? GetFirstIntVal(info);
                         break;
                     // Coordenadas del centro de detección (varios nombres posibles según firmware)
+                    case "det_box_cx": case "show_text_x":
                     case "rst_center_x": case "rst_pos_x": case "obj_x":
-                        cx = GetFirstFloatVal(info);
+                        cx ??= GetFirstFloatVal(info);
                         break;
+                    case "det_box_cy": case "show_text_y":
                     case "rst_center_y": case "rst_pos_y": case "obj_y":
-                        cy = GetFirstFloatVal(info);
+                        cy ??= GetFirstFloatVal(info);
                         break;
                     case "rst_rect_x":
                         rectX = GetFirstFloatVal(info);
@@ -342,7 +337,7 @@ public partial class FrameDetailWindow : Window
                 rangeText = isOk ? "OK" : "NG";
             }
 
-            return new OverlayData(isOk, score, rangeText, cx, cy);
+            return new LiveOverlayInfo(isOk, score, rangeText, cx, cy);
         }
         catch { return null; }
     }
@@ -362,85 +357,16 @@ public partial class FrameDetailWindow : Window
         double ch = OverlayCanvas.ActualHeight;
         if (cw <= 0 || ch <= 0) return;
 
-        // Calcula el rectángulo real renderizado de la imagen (Stretch=Uniform, centrado)
         double iw    = bmp.PixelWidth;
         double ih    = bmp.PixelHeight;
         double scale = Math.Min(cw / iw, ch / ih);
         double rw    = iw * scale;
         double rh    = ih * scale;
-        double ox    = (cw - rw) / 2;   // offset X (pillarbox)
-        double oy    = (ch - rh) / 2;   // offset Y (letterbox)
+        double ox    = (cw - rw) / 2;
+        double oy    = (ch - rh) / 2;
 
-        var od    = _overlayData;
-        var color = od.IsOk
-            ? Color.FromRgb(0, 220, 80)
-            : Color.FromRgb(255, 80, 80);
-        var brush = new SolidColorBrush(color);
-
-        // ── Texto top-right: "OKRange:50-100" ──────────────────────────────
-        var rangeLabel = MakeOverlayLabel(od.RangeText, brush);
-        rangeLabel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        Canvas.SetLeft(rangeLabel, ox + rw - rangeLabel.DesiredSize.Width - 6);
-        Canvas.SetTop(rangeLabel,  oy + 6);
-        OverlayCanvas.Children.Add(rangeLabel);
-
-        // ── Punto central + etiqueta ────────────────────────────────────────
-        double px, py;
-        if (od.CenterX.HasValue && od.CenterY.HasValue)
-        {
-            px = ox + od.CenterX.Value * scale;
-            py = oy + od.CenterY.Value * scale;
-        }
-        else
-        {
-            // Sin coords: coloca la etiqueta en top-left de la imagen
-            px = ox + 8;
-            py = oy + 26;
-            var scoreLabel = MakeOverlayLabel($"Type:{(od.IsOk ? "OK" : "NG")} Score:{od.Score:F0}", brush);
-            Canvas.SetLeft(scoreLabel, px);
-            Canvas.SetTop(scoreLabel,  py);
-            OverlayCanvas.Children.Add(scoreLabel);
-            return;
-        }
-
-        // Crosshair
-        const double arm = 10;
-        OverlayCanvas.Children.Add(MakeOverlayLine(px - arm, py, px + arm, py, brush));
-        OverlayCanvas.Children.Add(MakeOverlayLine(px, py - arm, px, py + arm, brush));
-
-        // Círculo central
-        const double r = 5;
-        var dot = new Ellipse { Width = r * 2, Height = r * 2, Stroke = brush, StrokeThickness = 1.5 };
-        Canvas.SetLeft(dot, px - r);
-        Canvas.SetTop(dot,  py - r);
-        OverlayCanvas.Children.Add(dot);
-
-        // Etiqueta al lado del punto
-        var label = MakeOverlayLabel($"Type:{(od.IsOk ? "OK" : "NG")} Score:{od.Score:F0}", brush);
-        Canvas.SetLeft(label, px + 14);
-        Canvas.SetTop(label,  py - 9);
-        OverlayCanvas.Children.Add(label);
+        MainWindow.DrawInspectionOverlay(OverlayCanvas, _overlayData, ox, oy, rw, rh, scale);
     }
-
-    private static System.Windows.Controls.TextBlock MakeOverlayLabel(string text, Brush brush) =>
-        new()
-        {
-            Text       = text,
-            Foreground = brush,
-            FontFamily = new FontFamily("Consolas"),
-            FontSize   = 12,
-            FontWeight = FontWeights.Bold,
-            Effect     = new DropShadowEffect
-            {
-                Color       = Colors.Black,
-                ShadowDepth = 1,
-                BlurRadius  = 3,
-                Opacity     = 0.85,
-            },
-        };
-
-    private static Line MakeOverlayLine(double x1, double y1, double x2, double y2, Brush brush) =>
-        new() { X1 = x1, Y1 = y1, X2 = x2, Y2 = y2, Stroke = brush, StrokeThickness = 1.5 };
 
     private static string? GetFirstStringVal(JsonElement info)
     {
@@ -457,6 +383,13 @@ public partial class FrameDetailWindow : Window
         return first.ValueKind == JsonValueKind.Number ? first.GetSingle() : null;
     }
 
+    private static float? GetFirstIntVal(JsonElement info)
+    {
+        if (!info.TryGetProperty("pIntValue", out var iv) || iv.ValueKind != JsonValueKind.Array) return null;
+        var first = iv.EnumerateArray().FirstOrDefault();
+        return first.ValueKind == JsonValueKind.Number ? (float?)first.GetInt32() : null;
+    }
+
     // -------------------------------------------------------------------------
     // Row model para el ListBox de módulos
     // -------------------------------------------------------------------------
@@ -468,6 +401,7 @@ public partial class FrameDetailWindow : Window
         public Brush   ForegroundColor { get; }
         public Brush   Background      { get; }
         public string  DetailLine      { get; }
+        public Brush   DetailColor     { get; }
         public bool    HasDetail       => !string.IsNullOrEmpty(DetailLine);
 
         public ModuleDisplayRow(ModuleEntity? m)
@@ -479,6 +413,7 @@ public partial class FrameDetailWindow : Window
                 ForegroundColor = Brushes.Gray;
                 Background      = Brushes.Transparent;
                 DetailLine      = string.Empty;
+                DetailColor     = Brushes.Transparent;
                 return;
             }
 
@@ -502,7 +437,11 @@ public partial class FrameDetailWindow : Window
                        : ok ? new SolidColorBrush(Color.FromArgb(80, 20, 60, 30))
                        :      Brushes.Transparent;
 
-            DetailLine = ng ? ExtractDetailLine(m.RawJson) : string.Empty;
+            bool showDetail = ng || m.ModuleName == "anomalyjudge";
+            DetailLine  = showDetail ? ExtractDetailLine(m.RawJson) : string.Empty;
+            DetailColor = ng
+                ? new SolidColorBrush(Color.FromRgb(204, 136, 136))
+                : new SolidColorBrush(Color.FromRgb(100, 180, 100));
         }
 
         // -------------------------------------------------------------------------

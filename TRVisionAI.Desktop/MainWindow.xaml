@@ -81,7 +81,8 @@
             <!-- Imagen en vivo -->
             <Border Grid.Column="0" Background="Black" Margin="4">
                 <Grid>
-                    <Image Source="{Binding LiveImage}" Stretch="Uniform"
+                    <Image x:Name="LiveImageControl"
+                           Source="{Binding LiveImage}" Stretch="Uniform"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                     <TextBlock Text="Sin imagen" Foreground="#333"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -97,6 +98,8 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
+                    <!-- Overlay de inspección en vivo -->
+                    <Canvas x:Name="LiveOverlayCanvas" IsHitTestVisible="False"/>
                 </Grid>
             </Border>
 

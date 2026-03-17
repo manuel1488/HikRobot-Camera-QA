@@ -45,6 +45,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _ngCount;
     public int TotalCount => OkCount + NgCount;
 
+    /// <summary>Datos de overlay para la imagen en vivo (score, rango, coords).</summary>
+    [ObservableProperty] private LiveOverlayInfo? _liveOverlay;
+
     // -------------------------------------------------------------------------
     // Internos
     // -------------------------------------------------------------------------
@@ -200,6 +203,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             Results.RemoveAt(Results.Count - 1);
 
         StatusMessage = $"Frame {_rowNum} — {frame.Verdict}";
+        LiveOverlay   = ExtractLiveOverlay(frame);
     }
 
     private void OnDisconnected()
@@ -214,6 +218,94 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if (_sessionId > 0)
             _ = _db.EndSessionAsync(_sessionId);
         _sessionId = 0;
+    }
+
+    // -------------------------------------------------------------------------
+    // Helper: extrae datos del overlay desde el frame en vivo
+    // -------------------------------------------------------------------------
+
+    private static LiveOverlayInfo? ExtractLiveOverlay(InspectionFrame frame)
+    {
+        var module = frame.ModuleResults.FirstOrDefault(m => m.ModuleName == "anomalyjudge")
+                  ?? frame.ModuleResults.FirstOrDefault(m => m.ModuleName == "format");
+        if (module is null) return null;
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(module.RawJson);
+            var root = doc.RootElement;
+            if (!root.TryGetProperty("pInfo", out var pInfo) ||
+                pInfo.ValueKind != System.Text.Json.JsonValueKind.Array)
+                return null;
+
+            string? statusString = null;
+            float   score        = 0;
+            string? rstStringEn  = null;
+            float?  limitL       = null, limitH = null;
+            float?  cx           = null, cy     = null;
+            float?  rectX = null, rectY = null, rectW = null, rectH = null;
+
+            foreach (var info in pInfo.EnumerateArray())
+            {
+                if (!info.TryGetProperty("strEnName", out var en)) continue;
+                switch (en.GetString())
+                {
+                    case "param_status_string":  statusString = GetFirstStr(info); break;
+                    case "rst_similarity_float": score = GetFirstFlt(info) ?? 0;  break;
+                    case "rst_string_en":        rstStringEn = GetFirstStr(info); break;
+                    case "rst_similarity_limit_l": limitL = GetFirstFlt(info) ?? GetFirstInt(info); break;
+                    case "rst_similarity_limit_h": limitH = GetFirstFlt(info) ?? GetFirstInt(info); break;
+                    case "det_box_cx": case "show_text_x":
+                    case "rst_center_x": case "rst_pos_x": case "obj_x":
+                        cx ??= GetFirstFlt(info); break;
+                    case "det_box_cy": case "show_text_y":
+                    case "rst_center_y": case "rst_pos_y": case "obj_y":
+                        cy ??= GetFirstFlt(info); break;
+                    case "rst_rect_x": rectX = GetFirstFlt(info); break;
+                    case "rst_rect_y": rectY = GetFirstFlt(info); break;
+                    case "rst_rect_w": rectW = GetFirstFlt(info); break;
+                    case "rst_rect_h": rectH = GetFirstFlt(info); break;
+                }
+            }
+
+            if (cx is null && rectX.HasValue && rectW.HasValue) cx = rectX + rectW / 2;
+            if (cy is null && rectY.HasValue && rectH.HasValue) cy = rectY + rectH / 2;
+
+            bool isOk = statusString == "OK";
+            string rangeText = !string.IsNullOrEmpty(rstStringEn)
+                ? rstStringEn.Replace(" ", "")
+                : limitL.HasValue && limitH.HasValue
+                    ? $"{(isOk ? "OK" : "NG")}Range:{limitL:F0}-{limitH:F0}"
+                    : isOk ? "OK" : "NG";
+
+            return new LiveOverlayInfo(isOk, score, rangeText, cx, cy);
+        }
+        catch { return null; }
+    }
+
+    private static string? GetFirstStr(System.Text.Json.JsonElement info)
+    {
+        if (!info.TryGetProperty("pStringValue", out var sv) ||
+            sv.ValueKind != System.Text.Json.JsonValueKind.Array) return null;
+        var first = sv.EnumerateArray().FirstOrDefault();
+        return first.ValueKind == System.Text.Json.JsonValueKind.Object &&
+               first.TryGetProperty("strValue", out var v) ? v.GetString() : null;
+    }
+
+    private static float? GetFirstFlt(System.Text.Json.JsonElement info)
+    {
+        if (!info.TryGetProperty("pFloatValue", out var fv) ||
+            fv.ValueKind != System.Text.Json.JsonValueKind.Array) return null;
+        var first = fv.EnumerateArray().FirstOrDefault();
+        return first.ValueKind == System.Text.Json.JsonValueKind.Number ? first.GetSingle() : null;
+    }
+
+    private static float? GetFirstInt(System.Text.Json.JsonElement info)
+    {
+        if (!info.TryGetProperty("pIntValue", out var iv) ||
+            iv.ValueKind != System.Text.Json.JsonValueKind.Array) return null;
+        var first = iv.EnumerateArray().FirstOrDefault();
+        return first.ValueKind == System.Text.Json.JsonValueKind.Number ? (float?)first.GetInt32() : null;
     }
 
     // -------------------------------------------------------------------------
