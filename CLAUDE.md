@@ -69,7 +69,6 @@ El demo de referencia está en `Program.cs` líneas 35-90.
 ## Lo que aún no está definido
 
 - Estructura exacta del JSON de resultado (depende de la solución configurada en SCMVS — capturar en crudo al conectar)
-- Tecnología de la aplicación consumidora (Blazor, Worker Service, WinForms, etc.)
 - Credenciales de la cámara
 
 ## Archivos de referencia para leer antes de escribir código
@@ -88,3 +87,5 @@ El demo de referencia está en `Program.cs` líneas 35-90.
 | ADR-003 | Modo de adquisición según caso de uso |
 | ADR-004 | Chunk Data JSON para extracción de resultados OK/NG |
 | ADR-005 | C# .NET como plataforma de integración |
+| ADR-006 | Velopack como sistema de instalación y auto-actualización |
+| ADR-007 | Servidor de actualizaciones en VPS propio (pendiente) |

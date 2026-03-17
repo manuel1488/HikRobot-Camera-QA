@@ -13,10 +13,12 @@
     <Company>Two Rockets</Company>
     <Copyright>Copyright © Two Rockets 2026</Copyright>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <StartupObject>TRVisionAI.Desktop.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="TR Vision AI — Configuración" Height="500" Width="480"
         ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
+        Icon="../Assets/app.ico"
         Background="#1E1E1E">
 
     <Window.Resources>
