@@ -110,23 +110,35 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Contadores OK / NG / TOTAL -->
+                <!-- Contadores OK Ratio / OK / NG / TOTAL -->
                 <Border Grid.Row="0" Background="#252526" Padding="12,10" Margin="0,0,0,4">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <StackPanel Margin="0,0,28,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                        <!-- OK Ratio (grande, como en SCMVS) -->
+                        <StackPanel Margin="0,0,24,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding OkRatioText}" Foreground="#7FBA00"
+                                       FontSize="42" FontWeight="Bold" HorizontalAlignment="Center"
+                                       FontFamily="Segoe UI"/>
+                            <TextBlock Text="OK Ratio" Foreground="#7FBA00" FontSize="11"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <Rectangle Width="1" Fill="#444" Margin="0,4,24,4"/>
+
+                        <StackPanel Margin="0,0,20,0" VerticalAlignment="Center">
                             <TextBlock Text="OK" Foreground="#7FBA00" FontSize="12" HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding OkCount}" Foreground="#7FBA00"
-                                       FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                       FontSize="32" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Margin="0,0,28,0">
+                        <StackPanel Margin="0,0,20,0" VerticalAlignment="Center">
                             <TextBlock Text="NG" Foreground="#E05050" FontSize="12" HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding NgCount}" Foreground="#E05050"
-                                       FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                       FontSize="32" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel>
+                        <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="TOTAL" Foreground="#AAAAAA" FontSize="12" HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding TotalCount}" Foreground="White"
-                                       FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                       FontSize="32" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>

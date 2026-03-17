@@ -43,7 +43,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private ObservableCollection<ResultRow> _results = [];
     [ObservableProperty] private int _okCount;
     [ObservableProperty] private int _ngCount;
-    public int TotalCount => OkCount + NgCount;
+    public int    TotalCount  => OkCount + NgCount;
+    public string OkRatioText => TotalCount == 0 ? "—%" : $"{(double)OkCount / TotalCount * 100:F0}%";
 
     /// <summary>Datos de overlay para la imagen en vivo (score, rango, coords).</summary>
     [ObservableProperty] private LiveOverlayInfo? _liveOverlay;
@@ -185,6 +186,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if      (frame.Verdict == InspectionVerdict.Ok) OkCount++;
         else if (frame.Verdict == InspectionVerdict.Ng) NgCount++;
         OnPropertyChanged(nameof(TotalCount));
+        OnPropertyChanged(nameof(OkRatioText));
 
         _rowNum++;
         Results.Insert(0, new ResultRow
