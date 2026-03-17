@@ -8,7 +8,7 @@ namespace TRVisionAI.Desktop;
 
 public partial class App : Application
 {
-    // URL del servidor de actualizaciones — cambiar cuando el VPS esté listo
+    // Update server URL — change once the VPS is ready
     private const string UpdateUrl = "https://releases.tworockets.com.mx/trvisionai";
 
     public static InspectionDbService DbService { get; private set; } = null!;
@@ -51,7 +51,7 @@ public partial class App : Application
         }
         catch
         {
-            // Sin conexión o servidor no disponible — continuar normalmente
+            // No connection or server unavailable — continue normally
         }
     }
 }

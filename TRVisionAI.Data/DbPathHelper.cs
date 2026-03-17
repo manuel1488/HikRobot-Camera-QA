@@ -3,7 +3,7 @@
 public static class DbPathHelper
 {
     /// <summary>
-    /// Carpeta raíz donde se guarda hikrobot.db y las imágenes.
+    /// Root folder where hikrobot.db and captured images are stored.
     /// %AppData%\TRVisionAI.Desktop\
     /// </summary>
     public static string AppDataRoot { get; } =
@@ -17,13 +17,13 @@ public static class DbPathHelper
         Path.Combine(AppDataRoot, "images");
 
     /// <summary>
-    /// Devuelve la ruta completa para guardar una imagen dado su path relativo.
+    /// Returns the absolute path for an image given its relative path.
     /// </summary>
     public static string ToAbsolutePath(string relativePath) =>
         Path.Combine(ImagesRoot, relativePath);
 
     /// <summary>
-    /// Construye la ruta relativa organizada por fecha: YYYY\MM\DD\{fileName}
+    /// Builds a date-organised relative path: YYYY\MM\DD\{fileName}
     /// </summary>
     public static string BuildRelativePath(DateTime date, string fileName)
     {
@@ -34,7 +34,7 @@ public static class DbPathHelper
     }
 
     /// <summary>
-    /// Garantiza que el directorio absoluto del path relativo existe.
+    /// Ensures the absolute directory for the given relative path exists.
     /// </summary>
     public static string EnsureDirectory(string relativePath)
     {

@@ -3,7 +3,7 @@ using TRVisionAI.Data.Entities;
 namespace TRVisionAI.Data;
 
 /// <summary>
-/// Detalle completo de un frame para mostrar en la UI bajo demanda.
+/// Full frame detail loaded on demand for display in the UI.
 /// </summary>
 public sealed class FrameDetail
 {

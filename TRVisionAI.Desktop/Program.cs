@@ -9,7 +9,7 @@ public class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        // Velopack DEBE inicializarse antes que cualquier otra cosa
+        // Velopack MUST be initialized before anything else
         VelopackApp.Build().Run();
 
         var app = new App();

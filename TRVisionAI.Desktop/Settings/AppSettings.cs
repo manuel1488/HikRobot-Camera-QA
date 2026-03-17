@@ -10,7 +10,7 @@ public sealed class CameraSettings
 {
     public string IpAddress     { get; set; } = string.Empty;
     public string User          { get; set; } = "Admin";
-    /// <summary>Contraseña cifrada con DPAPI (base64). Vacío si no se ha guardado.</summary>
+    /// <summary>DPAPI-encrypted password (base64). Empty if not yet saved.</summary>
     public string PasswordDpapi { get; set; } = string.Empty;
     public bool   UseEncryption { get; set; } = true;
 }
@@ -18,6 +18,6 @@ public sealed class CameraSettings
 public sealed class ApiSettings
 {
     public string BaseUrl     { get; set; } = string.Empty;
-    /// <summary>API key cifrada con DPAPI (base64). Vacío si no se ha configurado.</summary>
+    /// <summary>DPAPI-encrypted API key (base64). Empty if not yet configured.</summary>
     public string ApiKeyDpapi { get; set; } = string.Empty;
 }

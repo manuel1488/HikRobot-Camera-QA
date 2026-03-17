@@ -5,9 +5,9 @@ using MvVSControlSDKNet;
 namespace TRVisionAI.Camera;
 
 /// <summary>
-/// Wrapper sobre el SDK Hikrobot (MvVSControlSDKNet).
-/// Encapsula el ciclo de vida del dispositivo y la adquisición de frames.
-/// No es thread-safe: usar un hilo dedicado para el loop de GetResultData.
+/// Wrapper around the Hikrobot SDK (MvVSControlSDKNet).
+/// Encapsulates device lifecycle and frame acquisition.
+/// Not thread-safe: use a dedicated thread for the GetResultData loop.
 /// </summary>
 public sealed class CameraClient : IDisposable
 {
@@ -18,11 +18,11 @@ public sealed class CameraClient : IDisposable
     private          bool     _disposed;
 
     // -------------------------------------------------------------------------
-    // Conexión
+    // Connection
     // -------------------------------------------------------------------------
 
     /// <summary>
-    /// Enumera las cámaras disponibles en la red GigE local.
+    /// Enumerates cameras available on the local GigE network.
     /// </summary>
     public static List<CameraInfo> EnumerateDevices()
     {
@@ -45,12 +45,12 @@ public sealed class CameraClient : IDisposable
     }
 
     /// <summary>
-    /// Conecta y se autentica contra la cámara.
+    /// Connects and authenticates against the camera.
     /// </summary>
     /// <param name="encryptPassword">
-    /// false (default) — contraseña en texto plano.<br/>
-    /// true — la contraseña ya viene pre-cifrada (MD5 hex) por el cliente.
-    /// Usar <see cref="PasswordHelper.ToMd5Hex"/> para generar el hash.
+    /// false (default) — plain-text password.<br/>
+    /// true — password is already pre-encrypted (MD5 hex) by the caller.
+    /// Use <see cref="PasswordHelper.ToMd5Hex"/> to generate the hash.
     /// </param>
     public void Connect(CameraInfo camera, string user, string password, bool encryptPassword = false)
     {
@@ -73,12 +73,12 @@ public sealed class CameraClient : IDisposable
     }
 
     // -------------------------------------------------------------------------
-    // Adquisición
+    // Acquisition
     // -------------------------------------------------------------------------
 
     /// <summary>
-    /// Configura los parámetros y arranca el streaming de frames.
-    /// Debe llamarse después de Connect().
+    /// Configures acquisition parameters and starts the frame stream.
+    /// Must be called after Connect().
     /// </summary>
     public void StartAcquisition()
     {
@@ -97,11 +97,11 @@ public sealed class CameraClient : IDisposable
     }
 
     /// <summary>
-    /// Intenta obtener el siguiente frame disponible.
-    /// Bloqueante hasta que hay un frame o vence el timeout.
-    /// Siempre libera el buffer interno, incluso en caso de error o timeout.
+    /// Attempts to retrieve the next available frame.
+    /// Blocks until a frame arrives or the timeout expires.
+    /// Always releases the internal buffer, even on error or timeout.
     /// </summary>
-    /// <returns>El frame, o null si venció el timeout.</returns>
+    /// <returns>The frame, or null if the timeout expired.</returns>
     public InspectionFrame? TryGetFrame(int timeoutMs = 1000)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -133,7 +133,7 @@ public sealed class CameraClient : IDisposable
     }
 
     /// <summary>
-    /// Detiene el streaming de frames.
+    /// Stops the frame stream.
     /// </summary>
     public void StopAcquisition()
     {
@@ -143,7 +143,7 @@ public sealed class CameraClient : IDisposable
     }
 
     // -------------------------------------------------------------------------
-    // Construcción del frame
+    // Frame construction
     // -------------------------------------------------------------------------
 
     private static InspectionFrame BuildFrame(ref MV_VS_DATA frameData)

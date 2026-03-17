@@ -9,7 +9,7 @@ public sealed class SessionEntity
     public string    CameraModel { get; set; } = string.Empty;
     public string    Operator    { get; set; } = string.Empty;
 
-    /// <summary>Contadores denormalizados para resúmenes rápidos.</summary>
+    /// <summary>Denormalized counters for fast summary queries.</summary>
     public int OkCount { get; set; }
     public int NgCount { get; set; }
 

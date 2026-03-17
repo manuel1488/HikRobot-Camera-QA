@@ -4,7 +4,7 @@ using System.Text;
 namespace TRVisionAI.Camera;
 
 /// <summary>
-/// Información de una cámara descubierta en la red.
+/// Information about a camera discovered on the network.
 /// </summary>
 public sealed class CameraInfo
 {
@@ -14,7 +14,7 @@ public sealed class CameraInfo
     public string SerialNumber { get; private init; } = string.Empty;
     public string UserName     { get; private init; } = string.Empty;
 
-    // Referencia interna al struct del SDK para CreateHandle
+    // Internal reference to the SDK struct needed for CreateHandle
     internal MV_VS_DEVICE_INFO SdkInfo { get; private init; }
 
     internal static CameraInfo FromSdkInfo(uint index, MV_VS_DEVICE_INFO info)

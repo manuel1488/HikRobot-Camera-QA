@@ -6,8 +6,8 @@ using System.Text.Json;
 namespace TRVisionAI.Desktop.Settings;
 
 /// <summary>
-/// Persiste la configuración en %AppData%\TRVisionAI.Desktop\settings.json.
-/// Las contraseñas se cifran con Windows DPAPI (solo el usuario actual puede descifrarlas).
+/// Persists settings to %AppData%\TRVisionAI.Desktop\settings.json.
+/// Passwords are encrypted with Windows DPAPI (current user scope only).
 /// </summary>
 public static class SettingsService
 {
@@ -19,7 +19,7 @@ public static class SettingsService
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     // -------------------------------------------------------------------------
-    // Carga / Guardado
+    // Load / Save
     // -------------------------------------------------------------------------
 
     public static AppSettings Load()
@@ -46,10 +46,10 @@ public static class SettingsService
     }
 
     // -------------------------------------------------------------------------
-    // DPAPI — cifrado de credenciales
+    // DPAPI — credential encryption
     // -------------------------------------------------------------------------
 
-    /// <summary>Cifra un texto con DPAPI y retorna base64. Retorna "" si el texto es vacío.</summary>
+    /// <summary>Encrypts plain text with DPAPI and returns base64. Returns "" for empty input.</summary>
     public static string Protect(string plainText)
     {
         if (string.IsNullOrEmpty(plainText)) return string.Empty;
@@ -58,7 +58,7 @@ public static class SettingsService
         return Convert.ToBase64String(encrypted);
     }
 
-    /// <summary>Descifra un valor DPAPI en base64. Retorna "" si falla o está vacío.</summary>
+    /// <summary>Decrypts a DPAPI base64 value. Returns "" on failure or empty input.</summary>
     public static string Unprotect(string base64Cipher)
     {
         if (string.IsNullOrEmpty(base64Cipher)) return string.Empty;

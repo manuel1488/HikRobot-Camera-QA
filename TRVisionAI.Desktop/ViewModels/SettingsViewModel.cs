@@ -9,26 +9,26 @@ namespace TRVisionAI.Desktop.ViewModels;
 public sealed partial class SettingsViewModel : ObservableObject
 {
     // -------------------------------------------------------------------------
-    // Cámara
+    // Camera
     // -------------------------------------------------------------------------
     [ObservableProperty] private string _cameraIp       = string.Empty;
     [ObservableProperty] private string _cameraUser     = "Admin";
     [ObservableProperty] private string _cameraPassword = string.Empty;
     [ObservableProperty] private bool   _useEncryption  = true;
 
-    // Cámaras detectadas en la red
+    // Cameras discovered on the network
     [ObservableProperty] private ObservableCollection<CameraInfo> _foundCameras = [];
     [ObservableProperty] private CameraInfo?                      _selectedFoundCamera;
     [ObservableProperty] private bool                             _hasCameras;
 
     // -------------------------------------------------------------------------
-    // API REST
+    // REST API
     // -------------------------------------------------------------------------
     [ObservableProperty] private string _apiBaseUrl = string.Empty;
     [ObservableProperty] private string _apiKey     = string.Empty;
 
     // -------------------------------------------------------------------------
-    // Estado
+    // Status
     // -------------------------------------------------------------------------
     [ObservableProperty] private string _statusMessage  = string.Empty;
     [ObservableProperty] private bool   _isScanning;
@@ -36,7 +36,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public event EventHandler? Saved;
 
     // -------------------------------------------------------------------------
-    // Inicialización
+    // Initialization
     // -------------------------------------------------------------------------
 
     public void LoadFromSettings()
@@ -53,7 +53,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     // -------------------------------------------------------------------------
-    // Comandos
+    // Commands
     // -------------------------------------------------------------------------
 
     [RelayCommand]
@@ -78,7 +78,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             {
                 HasCameras           = true;
                 SelectedFoundCamera  = FoundCameras[0];
-                // Si solo hay una, seleccionar IP automáticamente
+                // Single camera found — auto-fill its IP
                 if (cameras.Count == 1)
                 {
                     CameraIp      = cameras[0].IpAddress;

@@ -13,7 +13,7 @@ using TRVisionAI.Data.Entities;
 using TRVisionAI.Desktop.ViewModels;
 using TRVisionAI.Models;
 
-// Alias para evitar ambigüedad con System.Windows.Visibility
+// Alias to avoid ambiguity with System.Windows.Visibility
 
 namespace TRVisionAI.Desktop.Views;
 
@@ -44,7 +44,7 @@ public partial class FrameDetailWindow : Window
     }
 
     // -------------------------------------------------------------------------
-    // Navegación
+    // Navigation
     // -------------------------------------------------------------------------
 
     private async void BtnPrev_Click(object sender, RoutedEventArgs e) => await NavigateAsync(_index - 1);
@@ -63,7 +63,7 @@ public partial class FrameDetailWindow : Window
         UpdateNavControls();
         PopulateHeader(CurrentRow);
 
-        // Limpiar estado del contenido anterior
+        // Clear previous content state
         OverlayCanvas.Children.Clear();
         _overlayData = null;
         FrameImage.Source  = null;
@@ -86,7 +86,7 @@ public partial class FrameDetailWindow : Window
     }
 
     // -------------------------------------------------------------------------
-    // Header: datos ya en ResultRow (sin latencia)
+    // Header: data already in ResultRow (no latency)
     // -------------------------------------------------------------------------
 
     private void PopulateHeader(ResultRow row)
@@ -104,7 +104,7 @@ public partial class FrameDetailWindow : Window
     }
 
     // -------------------------------------------------------------------------
-    // Carga lazy desde BD + disco
+    // Lazy load from DB + disk
     // -------------------------------------------------------------------------
 
     private async Task LoadDetailAsync()
@@ -116,8 +116,8 @@ public partial class FrameDetailWindow : Window
         var row = CurrentRow;
         try
         {
-            // Pequeño retry: el frame puede estar en plena escritura si se abrió
-            // inmediatamente después de aparecer en el grid.
+            // Short retry: the frame may still be writing if opened
+            // immediately after appearing in the grid.
             for (int attempt = 0; attempt < 3 && detail is null; attempt++)
             {
                 detail = await _db.GetFrameDetailAsync(row.SessionId, row.ReceivedAt);
@@ -147,11 +147,11 @@ public partial class FrameDetailWindow : Window
 
     private void PopulateDetail(FrameDetail detail)
     {
-        // Imagen principal
+        // Main image
         if (detail.ImageBytes is { Length: > 0 })
             FrameImage.Source = ToBitmapSource(detail.ImageBytes);
 
-        // Máscara de fallo (overlay)
+        // Failure mask (overlay)
         if (detail.MaskBytes is { Length: > 16 })
         {
             var maskSource = TryDecodeMask(detail.MaskBytes);
@@ -162,17 +162,17 @@ public partial class FrameDetailWindow : Window
             }
         }
 
-        // Módulos
+        // Modules
         var modules = detail.Entity.Modules.ToList();
         var items   = modules.Count > 0
             ? modules.Select(m => new ModuleDisplayRow(m)).ToList()
             : [new ModuleDisplayRow(null)];
         ModulesList.ItemsSource = items;
 
-        // JSON — pretty-print si es posible
+        // JSON — pretty-print when possible
         RawJsonBox.Text = PrettyJson(detail.Entity.RawJson);
 
-        // Overlay de inspección sobre la imagen
+        // Inspection overlay on the image
         _overlayData = ExtractOverlayData(detail.Entity);
         Dispatcher.InvokeAsync(DrawOverlay, DispatcherPriority.Background);
     }
@@ -201,6 +201,7 @@ public partial class FrameDetailWindow : Window
     // Helpers
     // -------------------------------------------------------------------------
 
+
     private static BitmapSource ToBitmapSource(byte[] jpegBytes)
     {
         using var ms = new MemoryStream(jpegBytes);
@@ -214,8 +215,8 @@ public partial class FrameDetailWindow : Window
     }
 
     /// <summary>
-    /// Intenta decodificar la máscara. Si falla (header de 16B embebido en archivos viejos),
-    /// reintenta saltando los primeros 16 bytes. Retorna null si no se puede decodificar.
+    /// Attempts to decode the mask image. If it fails (16-byte header embedded in older files),
+    /// retries by skipping the first 16 bytes. Returns null if decoding is not possible.
     /// </summary>
     private static BitmapSource? TryDecodeMask(byte[] bytes)
     {
@@ -225,7 +226,7 @@ public partial class FrameDetailWindow : Window
         }
         catch
         {
-            // Fallback: los archivos guardados antes del fix tienen header 16B al inicio
+            // Fallback: files saved before the fix have a 16-byte header at the start
             if (bytes.Length <= 16) return null;
             try
             {
@@ -243,12 +244,12 @@ public partial class FrameDetailWindow : Window
     private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
 
     // -------------------------------------------------------------------------
-    // Overlay de inspección: texto verde + punto central
+    // Inspection overlay: green text + detection point
     // -------------------------------------------------------------------------
 
     /// <summary>
-    /// Extrae datos del módulo anomalyjudge (o formato) para el overlay.
-    /// Busca rst_similarity_float, rst_string_en, rst_center_x/y en pInfo.
+    /// Extracts overlay data from the anomalyjudge (or format) module.
+    /// Reads rst_similarity_float, rst_string_en, and detection coordinates from pInfo.
     /// </summary>
     private static LiveOverlayInfo? ExtractOverlayData(FrameEntity entity)
     {
@@ -291,7 +292,7 @@ public partial class FrameDetailWindow : Window
                     case "rst_similarity_limit_h":
                         limitH = GetFirstFloatVal(info) ?? GetFirstIntVal(info);
                         break;
-                    // Coordenadas del centro de detección (varios nombres posibles según firmware)
+                    // Detection center coordinates (multiple field names depending on firmware)
                     case "det_box_cx": case "show_text_x":
                     case "rst_center_x": case "rst_pos_x": case "obj_x":
                         cx ??= GetFirstFloatVal(info);
@@ -315,14 +316,14 @@ public partial class FrameDetailWindow : Window
                 }
             }
 
-            // Centro desde rect si no había campos directos
+            // Derive center from rect when no direct coordinate fields were found
             if (cx is null && rectX.HasValue && rectW.HasValue) cx = rectX + rectW / 2;
             if (cy is null && rectY.HasValue && rectH.HasValue) cy = rectY + rectH / 2;
 
             bool isOk = statusString == "OK";
 
-            // Texto de rango: primero intenta parsear rst_string_en ("OK Range:50-100" → "OKRange:50-100")
-            // Si no, construye desde los límites numéricos
+            // Range text: try rst_string_en first ("OK Range:50-100" → "OKRange:50-100"),
+            // fall back to constructing it from the numeric limits
             string rangeText;
             if (!string.IsNullOrEmpty(rstStringEn))
             {
@@ -343,8 +344,8 @@ public partial class FrameDetailWindow : Window
     }
 
     /// <summary>
-    /// Dibuja el overlay en el Canvas sobre la imagen.
-    /// Corre en background priority (después del layout pass) para tener ActualWidth/Height correctos.
+    /// Draws the overlay on the Canvas over the image.
+    /// Runs at background priority (after the layout pass) so ActualWidth/Height are available.
     /// </summary>
     private void DrawOverlay()
     {
@@ -391,7 +392,7 @@ public partial class FrameDetailWindow : Window
     }
 
     // -------------------------------------------------------------------------
-    // Row model para el ListBox de módulos
+    // Row model for the modules ListBox
     // -------------------------------------------------------------------------
 
     private sealed class ModuleDisplayRow
@@ -419,7 +420,7 @@ public partial class FrameDetailWindow : Window
 
             ModuleName = m.ModuleName;
 
-            // Re-parsear veredicto desde RawJson para cubrir registros guardados antes del fix
+            // Re-parse verdict from RawJson to cover records saved before the fix
             var verdict = ParseVerdictFromJson(m.RawJson);
             bool ng     = verdict == InspectionVerdict.Ng;
             bool ok     = verdict == InspectionVerdict.Ok;
@@ -445,7 +446,7 @@ public partial class FrameDetailWindow : Window
         }
 
         // -------------------------------------------------------------------------
-        // Parseo de veredicto desde el JSON del módulo (pInfo → param_status_string)
+        // Parse verdict from module JSON (pInfo → param_status_string)
         // -------------------------------------------------------------------------
 
         private static InspectionVerdict ParseVerdictFromJson(string rawJson)
@@ -498,8 +499,8 @@ public partial class FrameDetailWindow : Window
         }
 
         // -------------------------------------------------------------------------
-        // Extrae una línea de detalle útil para módulos NG
-        // Busca: rst_string_en (anomalyjudge), rst_similarity_float, obj_string, etc.
+        // Extract a useful detail line for NG modules
+        // Looks for: rst_string_en (anomalyjudge), rst_similarity_float, obj_string, etc.
         // -------------------------------------------------------------------------
 
         private static string ExtractDetailLine(string rawJson)
@@ -532,7 +533,7 @@ public partial class FrameDetailWindow : Window
                     }
                 }
 
-                // Construir la línea de detalle más informativa disponible
+                // Build the most informative detail line available
                 if (similarity.HasValue && rstStringEn is not null)
                     return $"Score: {similarity:F1}  |  {rstStringEn}";
                 if (similarity.HasValue)

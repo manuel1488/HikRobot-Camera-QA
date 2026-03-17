@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 namespace TRVisionAI.Data;
 
 /// <summary>
-/// Servicio de acceso a datos para sesiones e inspecciones.
-/// Thread-safe: cada operación abre y cierra su propio DbContext del pool.
+/// Data access service for inspection sessions and frames.
+/// Thread-safe: each operation opens and closes its own DbContext from the pool.
 /// </summary>
 public sealed class InspectionDbService
 {
@@ -18,7 +18,7 @@ public sealed class InspectionDbService
     }
 
     /// <summary>
-    /// Crea una instancia lista para usar con la base de datos por defecto (%AppData%\TRVisionAI.Desktop\hikrobot.db).
+    /// Creates a ready-to-use instance backed by the default database (%AppData%\TRVisionAI.Desktop\hikrobot.db).
     /// </summary>
     public static InspectionDbService Create()
     {
@@ -37,10 +37,10 @@ public sealed class InspectionDbService
     }
 
     // -------------------------------------------------------------------------
-    // Inicialización
+    // Initialization
     // -------------------------------------------------------------------------
 
-    /// <summary>Aplica migraciones pendientes y garantiza que la BD existe.</summary>
+    /// <summary>Applies pending migrations and ensures the database exists.</summary>
     public async Task EnsureDatabaseAsync()
     {
         Directory.CreateDirectory(DbPathHelper.AppDataRoot);
@@ -49,7 +49,7 @@ public sealed class InspectionDbService
     }
 
     // -------------------------------------------------------------------------
-    // Sesiones
+    // Sessions
     // -------------------------------------------------------------------------
 
     public async Task<int> BeginSessionAsync(string cameraIp, string cameraModel, string @operator)
@@ -77,7 +77,7 @@ public sealed class InspectionDbService
     }
 
     // -------------------------------------------------------------------------
-    // Guardar frame
+    // Save frame
     // -------------------------------------------------------------------------
 
     public async Task SaveFrameAsync(int sessionId, InspectionFrame frame)
@@ -113,7 +113,7 @@ public sealed class InspectionDbService
 
         db.Frames.Add(entity);
 
-        // Actualizar contadores denormalizados de la sesión
+        // Update denormalized session counters
         var session = await db.Sessions.FindAsync(sessionId);
         if (session is not null)
         {
@@ -125,7 +125,7 @@ public sealed class InspectionDbService
     }
 
     // -------------------------------------------------------------------------
-    // Consultas
+    // Queries
     // -------------------------------------------------------------------------
 
     public async Task<List<FrameEntity>> GetFramesAsync(
@@ -153,7 +153,7 @@ public sealed class InspectionDbService
             .ToListAsync();
     }
 
-    /// <summary>Frames pendientes de enviar a la API (ApiSentAt == null).</summary>
+    /// <summary>Frames pending upload to the API (ApiSentAt == null).</summary>
     public async Task<List<FrameEntity>> GetPendingApiFramesAsync(int batchSize = 50)
     {
         await using var db = await _factory.CreateDbContextAsync();
@@ -178,14 +178,14 @@ public sealed class InspectionDbService
     }
 
     /// <summary>
-    /// Carga el detalle completo de un frame: entidad con módulos + bytes de imagen del disco.
-    /// Retorna null si el frame aún no fue persistido (race condition posible en frames muy recientes).
+    /// Loads the full frame detail: entity with modules + image bytes from disk.
+    /// Returns null if the frame has not been persisted yet (possible race condition for very recent frames).
     /// </summary>
     public async Task<FrameDetail?> GetFrameDetailAsync(int sessionId, DateTime receivedAt)
     {
         await using var db = await _factory.CreateDbContextAsync();
 
-        // Usar ReceivedAt como clave de lookup porque nImageNum del SDK puede repetirse entre capturas.
+        // Use ReceivedAt as the lookup key because the SDK's nImageNum can repeat across captures.
         var utc    = receivedAt.ToUniversalTime();
         var entity = await db.Frames
             .AsNoTracking()
@@ -230,7 +230,7 @@ public sealed class InspectionDbService
     {
         if (bytes is not { Length: > 0 }) return null;
 
-        // Usar timestamp como nombre para garantizar unicidad aunque nImageNum del SDK se repita.
+        // Use the timestamp as the file name to guarantee uniqueness even when the SDK's nImageNum repeats.
         string fileName     = $"{date:HHmmss_fff}_{suffix}.jpg";
         string relativePath = DbPathHelper.BuildRelativePath(date, fileName);
         string absPath      = DbPathHelper.EnsureDirectory(relativePath);

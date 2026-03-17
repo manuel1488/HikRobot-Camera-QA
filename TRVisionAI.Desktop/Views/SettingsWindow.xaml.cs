@@ -15,7 +15,7 @@ public partial class SettingsWindow : Window
         _vm.LoadFromSettings();
         DataContext = _vm;
 
-        // Pre-cargar contraseñas en los PasswordBox (no soportan binding)
+        // Pre-populate PasswordBoxes (they do not support data binding)
         CameraPwd.Password = _vm.CameraPassword;
         ApiKeyPwd.Password = _vm.ApiKey;
 

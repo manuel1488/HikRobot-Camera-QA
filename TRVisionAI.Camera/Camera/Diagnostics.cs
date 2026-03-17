@@ -5,13 +5,13 @@ using MvVSControlSDKNet;
 namespace TRVisionAI.Camera;
 
 /// <summary>
-/// Diagnósticos de conectividad y autenticación para la cámara Hikrobot.
-/// Útil para resolver errores de login antes de iniciar la captura.
+/// Connectivity and authentication diagnostics for the Hikrobot camera.
+/// Useful for troubleshooting login errors before starting capture.
 /// </summary>
 public static class Diagnostics
 {
-    // Credenciales por defecto de fábrica — confirmadas en los demos oficiales del SDK:
-    //   Demo/C/GrabImage/test.cpp línea 248-249: "Admin" / "Abc1234"
+    // Default factory credentials — confirmed in the official SDK demos:
+    //   Demo/C/GrabImage/test.cpp lines 248-249: "Admin" / "Abc1234"
     //   Demo/C#/Winform/BasicDemo/Form1.cs: Login("Admin", password)
     private static readonly (string user, string pass)[] DefaultCredentials =
     [
@@ -42,8 +42,8 @@ public static class Diagnostics
     private static void PrintSdkVersion()
     {
         PrintSection("1. Versión del SDK");
-        // CSystem no expone GetSDKVersion en .NET — solo en C API
-        // Lo indicamos como referencia informativa
+        // CSystem does not expose GetSDKVersion in .NET — only in the C API
+        // Listed here as an informational reference
         Console.WriteLine("  SDK:  MvVSControlSDK.Net  (ver. instalada con SCMVS)");
         Console.WriteLine("  DLL:  MvVisionSensorControl.dll  (win64)");
     }
@@ -52,8 +52,8 @@ public static class Diagnostics
     {
         PrintSection("2. Interfaces de red del PC");
 
-        // La cámara está en 169.254.x.x (LLA) → el PC debe tener una NIC en ese rango
-        // para que la comunicación funcione correctamente
+        // Camera is on 169.254.x.x (LLA) → the PC must have a NIC in that range
+        // for communication to work correctly
         bool foundCompatible = false;
         string cameraSubnet = string.Join(".", camera.IpAddress.Split('.').Take(2)); // "169.254"
 
@@ -102,7 +102,7 @@ public static class Diagnostics
         Console.WriteLine($"  Nombre usuario: {(string.IsNullOrWhiteSpace(camera.UserName) ? "(sin nombre)" : camera.UserName)}");
         Console.WriteLine($"  IP actual     : {camera.IpAddress}");
 
-        // Modo de IP (nIpCfgCurrent es uint, comparar con uint)
+        // IP mode (nIpCfgCurrent is uint, compare as uint)
         string ipMode = (info.nIpCfgCurrent >> 24) switch
         {
             0x05u => "Static",
@@ -117,13 +117,13 @@ public static class Diagnostics
             Console.Write(ipMode);
         Console.WriteLine();
 
-        // MAC
+        // MAC address
         uint macHi = info.nMacAddrHigh;
         uint macLo = info.nMacAddrLow;
         string mac = $"{(macHi >> 8) & 0xFF:X2}:{macHi & 0xFF:X2}:{(macLo >> 24) & 0xFF:X2}:{(macLo >> 16) & 0xFF:X2}:{(macLo >> 8) & 0xFF:X2}:{macLo & 0xFF:X2}";
         Console.WriteLine($"  MAC           : {mac}");
 
-        // Versión
+        // Firmware version
         string fw = info.chDeviceVersion.TrimEnd('\0');
         Console.WriteLine($"  Versión FW    : {(string.IsNullOrWhiteSpace(fw) ? "(no disponible)" : fw)}");
     }
@@ -146,7 +146,7 @@ public static class Diagnostics
 
         WriteColor("  CreateHandle  OK", ConsoleColor.Green);
 
-        // Ping básico
+        // Basic ping
         Console.Write($"  Ping {camera.IpAddress,-18}");
         try
         {
@@ -180,17 +180,17 @@ public static class Diagnostics
             string passDisplay = string.IsNullOrEmpty(pass) ? "(vacía)" : new string('*', pass.Length);
             Console.Write($"  {user,-16} {passDisplay,-12} ");
 
-            // --- Variante A: Login() texto plano ---
+            // --- Variant A: Login() plain text ---
             string resultA = TryLogin(camera, user, pass, loginEx: false, encrypt: false, out bool sessionActive);
             WriteLoginResult(resultA);
             Console.Write($"  {"",-2}");
 
-            // --- Variante B: LoginEX(bEncryption=false) ---
+            // --- Variant B: LoginEX(bEncryption=false) ---
             string resultB = TryLogin(camera, user, pass, loginEx: true, encrypt: false, out sessionActive);
             WriteLoginResult(resultB);
             Console.Write($"  {"",-2}");
 
-            // --- Variante C: LoginEX(bEncryption=true) con MD5 ---
+            // --- Variant C: LoginEX(bEncryption=true) with MD5 ---
             string md5Pass = PasswordHelper.ToMd5Hex(pass);
             string resultC = TryLogin(camera, user, md5Pass, loginEx: true, encrypt: true, out sessionActive);
             WriteLoginResult(resultC);
@@ -231,7 +231,7 @@ public static class Diagnostics
         }
     }
 
-    /// <summary>Intenta hacer login y retorna "OK" o el hint del error.</summary>
+    /// <summary>Attempts login and returns "OK" or an error hint string.</summary>
     private static string TryLogin(CameraInfo camera, string user, string pass,
         bool loginEx, bool encrypt, out bool sessionActive)
     {

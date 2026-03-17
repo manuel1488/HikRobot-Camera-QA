@@ -4,14 +4,14 @@ using System.Text;
 namespace TRVisionAI.Camera;
 
 /// <summary>
-/// Utilidades para el cifrado de contraseña que acepta LoginEX(bEncryption=true).
-/// Hikrobot usa MD5 del texto plano como forma de "pre-cifrado" del cliente.
+/// Password utilities for the encryption mode accepted by LoginEX(bEncryption=true).
+/// Hikrobot uses MD5 of the plain-text password as the client-side "pre-encryption" step.
 /// </summary>
 public static class PasswordHelper
 {
     /// <summary>
-    /// Retorna el hash MD5 de la contraseña en formato hexadecimal en minúsculas (32 chars).
-    /// Esto es lo que se pasa a LoginEX(..., bEncryption: true).
+    /// Returns the MD5 hash of the password as a lowercase hex string (32 chars).
+    /// This is what must be passed to LoginEX(..., bEncryption: true).
     /// </summary>
     public static string ToMd5Hex(string plainPassword)
     {

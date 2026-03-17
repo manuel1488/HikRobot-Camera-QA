@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Design;
 namespace TRVisionAI.Data;
 
 /// <summary>
-/// Usada por las herramientas de EF (dotnet ef migrations add …) en tiempo de diseño.
+/// Used by EF tooling (dotnet ef migrations add …) at design time.
 /// </summary>
 public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {

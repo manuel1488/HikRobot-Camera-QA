@@ -3,8 +3,8 @@
 namespace TRVisionAI.Desktop.ViewModels;
 
 /// <summary>
-/// Fila de resultado para el DataGrid. Solo contiene datos ligeros de presentación.
-/// El detalle completo (imagen, módulos, JSON) se carga bajo demanda desde la BD.
+/// DataGrid result row. Contains only lightweight presentation data.
+/// Full detail (image, modules, JSON) is loaded on demand from the database.
 /// </summary>
 public sealed class ResultRow
 {
@@ -15,7 +15,7 @@ public sealed class ResultRow
     public long              TotalCount   { get; init; }
     public long              NgCount      { get; init; }
 
-    /// <summary>Clave para cargar el detalle desde la BD bajo demanda.</summary>
+    /// <summary>Key used to load full detail from the database on demand.</summary>
     public long FrameNumber { get; init; }
     public int  SessionId   { get; init; }
 

@@ -5,14 +5,14 @@ using TRVisionAI.Models;
 namespace TRVisionAI.Camera;
 
 /// <summary>
-/// Parsea el Chunk Data de un frame MV_VS_DATA y extrae el resultado de inspección.
+/// Parses the Chunk Data from an MV_VS_DATA frame and extracts the inspection result.
 ///
-/// Estructura del buffer pChunkData (se lee de atrás hacia adelante):
-///   [...datos del chunk...][ChunkID: 4B big-endian][ChunkLen: 4B big-endian]
+/// pChunkData buffer layout (read back-to-front):
+///   [...chunk data...][ChunkID: 4B big-endian][ChunkLen: 4B big-endian]
 ///
-/// Chunk IDs relevantes:
-///   60005537 — resultado JSON (ScDeviceSolutionRunningResult, etc.)
-///   60005536 — imagen de máscara del módulo
+/// Relevant Chunk IDs:
+///   60005537 — JSON result (ScDeviceSolutionRunningResult, etc.)
+///   60005536 — module mask image
 /// </summary>
 internal static class ChunkParser
 {
@@ -55,8 +55,8 @@ internal static class ChunkParser
             }
             else if (chunkId == ChunkMaskImagePort && maskBytes is null && chunkLen > 16)
             {
-                // Los primeros 16 bytes son header: ModuleID(4) + Format(4) + Width(4) + Height(4)
-                // El resto son los bytes de imagen reales (JPEG cuando Format == 1)
+                // First 16 bytes are a header: ModuleID(4) + Format(4) + Width(4) + Height(4)
+                // The remainder are the actual image bytes (JPEG when Format == 1)
                 int imageLen = (int)chunkLen - 16;
                 maskBytes = new byte[imageLen];
                 Array.Copy(chunkData, dataStart + 16, maskBytes, 0, imageLen);
@@ -95,9 +95,9 @@ internal static class ChunkParser
             var ngCount = root.TryGetProperty("ScDeviceSolutionNgNumber", out var ng)
                 ? GetLong(ng) : 0L;
 
-            // Fuente primaria: logic.solution_sts o logic.param_status_string_solution
-            // (string explícito "OK"/"NG" del módulo lógico que es el árbitro final).
-            // Fallback: ScDeviceSolutionRunningResult numérico (semántica ambigua en algunos firmware).
+            // Primary source: logic.solution_sts or logic.param_status_string_solution
+            // (explicit "OK"/"NG" string from the logic module, which is the final arbiter).
+            // Fallback: numeric ScDeviceSolutionRunningResult (ambiguous semantics on some firmware).
             var verdict = TryReadLogicSolutionVerdict(root)
                        ?? ReadNumericVerdict(root)
                        ?? InspectionVerdict.Unknown;
@@ -142,9 +142,9 @@ internal static class ChunkParser
     }
 
     /// <summary>
-    /// Lee el veredicto de la solución desde el módulo "logic" en CurrentData.
-    /// Busca los campos solution_sts o param_status_string_solution que contienen "OK"/"NG" explícito.
-    /// Retorna null si no se encuentra el módulo o los campos.
+    /// Reads the solution verdict from the "logic" module in CurrentData.
+    /// Looks for solution_sts or param_status_string_solution fields containing an explicit "OK"/"NG".
+    /// Returns null if the module or fields are not found.
     /// </summary>
     private static InspectionVerdict? TryReadLogicSolutionVerdict(JsonElement root)
     {
@@ -164,7 +164,7 @@ internal static class ChunkParser
                 if (!info.TryGetProperty("strEnName", out var enNameEl)) continue;
                 var enName = enNameEl.GetString();
 
-                // solution_sts y param_status_string_solution son los campos más fiables
+                // solution_sts and param_status_string_solution are the most reliable fields
                 if (enName is "solution_sts" or "param_status_string_solution")
                 {
                     if (info.TryGetProperty("pStringValue", out var sv) &&
@@ -190,8 +190,8 @@ internal static class ChunkParser
     }
 
     /// <summary>
-    /// Fallback: lee ScDeviceSolutionRunningResult como numérico (0=Ok, 1=Ng).
-    /// Puede tener semántica ambigua según versión de firmware — usar solo si no hay string explícito.
+    /// Fallback: reads ScDeviceSolutionRunningResult as a numeric verdict (0=Ok, 1=Ng).
+    /// May have ambiguous semantics depending on firmware version — use only when no explicit string is available.
     /// </summary>
     private static InspectionVerdict? ReadNumericVerdict(JsonElement root)
     {
@@ -207,9 +207,9 @@ internal static class ChunkParser
     }
 
     /// <summary>
-    /// Lee el veredicto de un módulo desde su array pInfo.
-    /// Fuente primaria: pInfo[strEnName=="param_status_string"].pStringValue[0].strValue ("OK"/"NG").
-    /// Fallback: pInfo[strEnName=="param_status"].pIntValue[0] donde 1=OK.
+    /// Reads a module verdict from its pInfo array.
+    /// Primary source: pInfo[strEnName=="param_status_string"].pStringValue[0].strValue ("OK"/"NG").
+    /// Fallback: pInfo[strEnName=="param_status"].pIntValue[0] where 1=OK.
     /// </summary>
     private static InspectionVerdict ParseModuleVerdict(JsonElement item)
     {
@@ -247,17 +247,17 @@ internal static class ChunkParser
             if (statusString is not null && statusInt is not null) break;
         }
 
-        // El string es la fuente autoritativa cuando está disponible
+        // The string field is authoritative when present
         if (statusString is "NG") return InspectionVerdict.Ng;
         if (statusString is "OK") return InspectionVerdict.Ok;
 
-        // Fallback por int: 1 = OK de forma consistente en módulos sin string
+        // Int fallback: 1 = OK consistently across modules that lack a string field
         return statusInt == 1 ? InspectionVerdict.Ok : InspectionVerdict.Unknown;
     }
 
     /// <summary>
-    /// Lee un valor numérico o string-numérico de un JsonElement.
-    /// El firmware puede devolver los contadores como número o como string según versión.
+    /// Reads a numeric or string-encoded numeric value from a JsonElement.
+    /// Some firmware versions return counters as strings rather than numbers.
     /// </summary>
     private static long GetLong(JsonElement e) => e.ValueKind switch
     {

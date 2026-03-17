@@ -58,7 +58,7 @@ public partial class MainWindow : Window
     }
 
     // -------------------------------------------------------------------------
-    // Overlay en vivo
+    // Live overlay
     // -------------------------------------------------------------------------
 
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -91,10 +91,10 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Dibuja el overlay estilo SCMVS sobre cualquier Canvas:
-    ///   • Badge OK/NG top-left (fondo verde/rojo, texto blanco grande)
+    /// Draws the SCMVS-style overlay on any Canvas:
+    ///   • OK/NG badge top-left (green/red background, large white text)
     ///   • Range text top-right ("OKRange:50-100")
-    ///   • Si hay coords: crosshair + "Type:OK Score:77" junto al punto
+    ///   • If coordinates are available: crosshair + "Type:OK Score:77" next to the point
     /// </summary>
     internal static void DrawInspectionOverlay(
         Canvas canvas, LiveOverlayInfo od,
@@ -106,7 +106,7 @@ public partial class MainWindow : Window
         var bgBrush  = new SolidColorBrush(bgColor);
         var shadow   = new DropShadowEffect { Color = Colors.Black, ShadowDepth = 1, BlurRadius = 3, Opacity = 0.85 };
 
-        // ── Badge OK/NG top-left (igual al badge verde de SCMVS) ─────────────
+        // ── OK/NG badge top-left (matches the SCMVS green badge style) ──────
         var badgeText = new System.Windows.Controls.TextBlock
         {
             Text       = od.IsOk ? "OK" : "NG",
@@ -125,7 +125,7 @@ public partial class MainWindow : Window
         Canvas.SetTop(badge,  oy);
         canvas.Children.Add(badge);
 
-        // ── Range text top-right ("OKRange:50-100") ──────────────────────────
+        // ── Range text top-right ("OKRange:50-100") ──────────────────────────────
         if (!string.IsNullOrEmpty(od.RangeText))
         {
             var rangeTb = new System.Windows.Controls.TextBlock
@@ -143,7 +143,7 @@ public partial class MainWindow : Window
             canvas.Children.Add(rangeTb);
         }
 
-        // ── Punto de detección + "Type:OK Score:77" ──────────────────────────
+        // ── Detection point + "Type:OK Score:77" ─────────────────────────────
         string scoreText = $"Type:{(od.IsOk ? "OK" : "NG")} Score:{od.Score:F0}";
 
         if (od.CenterX.HasValue && od.CenterY.HasValue)
@@ -167,7 +167,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            // Sin coordenadas: mostrar score debajo del badge
+            // No coordinates: show score below the badge
             var scoreTb = MakeOverlayText(scoreText, fgBrush, shadow);
             Canvas.SetLeft(scoreTb, ox + 6);
             Canvas.SetTop(scoreTb,  oy + 46);

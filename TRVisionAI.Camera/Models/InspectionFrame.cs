@@ -10,7 +10,7 @@ public sealed class InspectionFrame
     public long   TotalCount   { get; init; }
     public long   NgCount      { get; init; }
 
-    /// <summary>JSON en crudo del Chunk Data (para diagnóstico).</summary>
+    /// <summary>Raw JSON from Chunk Data (for diagnostics).</summary>
     public string RawJson { get; init; } = string.Empty;
 
     /// <summary>Bytes JPEG de la imagen principal. Null si no se pudo extraer.</summary>
@@ -18,13 +18,13 @@ public sealed class InspectionFrame
     public int     ImageWidth    { get; init; }
     public int     ImageHeight   { get; init; }
 
-    /// <summary>Bytes de la imagen de máscara (ChunkID 60005536). Null si no está presente.</summary>
+    /// <summary>Mask image bytes (ChunkID 60005536). Null if not present in the frame.</summary>
     public byte[]? MaskImageBytes { get; init; }
 
-    /// <summary>Resultados por módulo extraídos del JSON de Chunk Data.</summary>
+    /// <summary>Per-module results extracted from the Chunk Data JSON.</summary>
     public IReadOnlyList<ModuleResult> ModuleResults { get; init; } = [];
 
-    /// <summary>Valores crudos del SDK para depuración paso a paso.</summary>
+    /// <summary>Raw SDK values for step-by-step debugging.</summary>
     public FrameDebugInfo Debug { get; init; } = new();
 }
 
@@ -43,7 +43,7 @@ public sealed class FrameDebugInfo
     public bool   HasChunkPtr   { get; init; }
     /// <summary>Primeros 64 bytes del ChunkData en hex.</summary>
     public string ChunkHexDump  { get; init; } = string.Empty;
-    /// <summary>Últimos 64 bytes del ChunkData en hex (donde está el trailer de cada chunk).</summary>
+    /// <summary>Last 64 bytes of ChunkData as hex (where each chunk trailer is located).</summary>
     public string ChunkHexTail  { get; init; } = string.Empty;
     /// <summary>Intento de leer el ChunkData completo como UTF-8 (por si es JSON plano).</summary>
     public string ChunkAsText   { get; init; } = string.Empty;

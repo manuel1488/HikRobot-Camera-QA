@@ -13,7 +13,7 @@ namespace TRVisionAI.Desktop.ViewModels;
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     // -------------------------------------------------------------------------
-    // Estado
+    // State
     // -------------------------------------------------------------------------
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsDisconnected))]
@@ -36,7 +36,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     // -------------------------------------------------------------------------
-    // Datos en vivo
+    // Live data
     // -------------------------------------------------------------------------
 
     [ObservableProperty] private BitmapSource?                   _liveImage;
@@ -46,11 +46,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public int    TotalCount  => OkCount + NgCount;
     public string OkRatioText => TotalCount == 0 ? "—%" : $"{(double)OkCount / TotalCount * 100:F0}%";
 
-    /// <summary>Datos de overlay para la imagen en vivo (score, rango, coords).</summary>
+    /// <summary>Overlay data for the live image (score, range, detection coordinates).</summary>
     [ObservableProperty] private LiveOverlayInfo? _liveOverlay;
 
     // -------------------------------------------------------------------------
-    // Internos
+    // Internals
     // -------------------------------------------------------------------------
 
     private CameraClient?            _client;
@@ -65,7 +65,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     // -------------------------------------------------------------------------
-    // Auto-conexión al abrir la ventana
+    // Auto-connect on window open
     // -------------------------------------------------------------------------
 
     public async Task AutoConnectAsync()
@@ -129,14 +129,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     // -------------------------------------------------------------------------
-    // Comando Detener
+    // Stop command
     // -------------------------------------------------------------------------
 
     [RelayCommand(CanExecute = nameof(IsConnected))]
     private void Disconnect() => _cts?.Cancel();
 
     // -------------------------------------------------------------------------
-    // Loop de adquisición (hilo de fondo)
+    // Acquisition loop (background thread)
     // -------------------------------------------------------------------------
 
     private void AcquisitionLoop(CancellationToken token)
@@ -168,7 +168,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             if (frame is null) continue;
             errors = 0;
 
-            // Persistir en BD (desde el hilo de fondo está bien — factory crea su propio context)
+            // Persist to DB (safe from background thread — factory creates its own context)
             if (_sessionId > 0)
                 _ = _db.SaveFrameAsync(_sessionId, frame);
 
@@ -223,7 +223,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     // -------------------------------------------------------------------------
-    // Helper: extrae datos del overlay desde el frame en vivo
+    // Helper: extract overlay data from the live frame
     // -------------------------------------------------------------------------
 
     private static LiveOverlayInfo? ExtractLiveOverlay(InspectionFrame frame)
@@ -311,7 +311,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     // -------------------------------------------------------------------------
-    // Helper: bytes JPEG → BitmapSource (thread-safe via Freeze)
+    // Helper: JPEG bytes → BitmapSource (thread-safe via Freeze)
     // -------------------------------------------------------------------------
 
     private static BitmapSource ToBitmapSource(byte[] jpegBytes)
